@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/platform-costs/convex",
-      "schedule": "59 * * * *"
+      "schedule": "59 0 * * *"
     },
     {
       "path": "/api/cron/subscription-pauses",
@@ -15,11 +15,11 @@
     },
     {
       "path": "/api/cron/trigger-health",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/influencer-analytics",
-      "schedule": "* * * * *"
+      "schedule": "0 1 * * *"
     }
   ]
 }
