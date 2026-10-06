@@ -49,6 +49,10 @@ jest.mock("@/app/posthog", () => ({
   }),
 }));
 
+jest.mock("@/lib/api/agent-run-correlation", () => ({
+  createAgentRunCorrelationToken: () => "run-correlation-token",
+}));
+
 jest.mock("next/server", () => ({
   after: jest.fn(),
   NextRequest: class NextRequest {},
@@ -91,7 +95,7 @@ jest.mock("@/lib/utils/sandbox-file-utils", () => ({
   hasLocalDesktopSourcePaths: jest.fn(),
   prepareLocalDesktopAttachmentsForTrigger: jest.fn(),
   rewriteSandboxFilePathsInMessages: jest.fn(),
-  stripLocalDesktopSourcePaths: jest.fn(),
+  stripLocalDesktopSourcePaths: (messages: unknown[]) => messages,
   uploadSandboxFiles: jest.fn(),
 }));
 
@@ -430,7 +434,7 @@ describe("Agent trigger route lifecycle", () => {
   });
 });
 
-describe("regional subscription gate before Agent dispatch", () => {
+describe("regional payment gate with all-account product access", () => {
   const previousVercel = process.env.VERCEL;
   beforeEach(() => {
     jest.clearAllMocks();
@@ -441,6 +445,9 @@ describe("regional subscription gate before Agent dispatch", () => {
       variant: "test",
       payload: undefined,
     });
+    mockCreatePublicToken.mockResolvedValue("run-token");
+    mockSetActiveTriggerRun.mockResolvedValue("updated");
+    mockTriggerTask.mockResolvedValue({ id: "trigger-run" });
     mockGetUserIDAndPro.mockResolvedValue({
       userId: "user-free",
       subscription: "free",
@@ -452,7 +459,7 @@ describe("regional subscription gate before Agent dispatch", () => {
     else process.env.VERCEL = previousVercel;
   });
   it.each(["/api/agent", "/api/agent-long"] as const)(
-    "blocks %s before chat persistence or paid worker dispatch",
+    "does not require payment at %s for an account with Pro product access",
     async (endpoint) => {
       const response = await createAgentTriggerPost({ endpoint })({
         headers: new Headers({ "x-vercel-ip-country": "NG" }),
@@ -468,15 +475,14 @@ describe("regional subscription gate before Agent dispatch", () => {
           ],
           sandboxPreference: "local",
           regionalSubscriptionCountry: "US",
-          subscription: "pro",
         }),
       } as any);
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
       expect(await response.json()).toMatchObject({
-        metadata: { subscription_required: true },
+        chatId: "test-chat",
+        runId: "trigger-run",
       });
-      expect(mockHandleInitialChatAndUserMessage).not.toHaveBeenCalled();
-      expect(mockTriggerTask).not.toHaveBeenCalled();
+      expect(mockTriggerTask).toHaveBeenCalledTimes(1);
     },
   );
 });

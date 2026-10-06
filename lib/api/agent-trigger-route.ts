@@ -476,7 +476,7 @@ export const createAgentTriggerPost =
         subscriptionFirstCountryFromRequest(req);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: regionalSubscriptionCountry,
         surface: "agent",
       });

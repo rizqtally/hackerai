@@ -1878,7 +1878,7 @@ export const agentLongTask = task({
       userStopSignal.signal.throwIfAborted();
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: payload.regionalSubscriptionCountry,
         surface: "agent_worker",
       });

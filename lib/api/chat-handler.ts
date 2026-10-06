@@ -388,7 +388,7 @@ export const createChatHandler = () => {
       await assertUserCanMakeCostIncurringRequest(userId);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: subscriptionFirstCountryFromRequest(req),
         surface: "ask",
       });

@@ -85,7 +85,7 @@ describe("regional subscription access", () => {
       })),
     ),
   )(
-    "preserves $subscription access from $country even under treatment",
+    "preserves $subscription product access from $country even under treatment",
     async ({ country, subscription }) => {
       await expect(
         enforceRegionalSubscriptionFirst({
