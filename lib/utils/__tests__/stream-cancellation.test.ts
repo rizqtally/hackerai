@@ -136,7 +136,7 @@ describe("createPreemptiveTimeout", () => {
       }),
     });
 
-    jest.advanceTimersByTime(359_999);
+    jest.advanceTimersByTime(239_999);
     expect(abortSpy).not.toHaveBeenCalled();
 
     jest.advanceTimersByTime(1);
@@ -154,9 +154,9 @@ describe("createPreemptiveTimeout", () => {
         requested_model_slug: "anthropic/claude-opus-4.6",
         provider_name: "Google Vertex",
         provider_attribution_available: true,
-        max_duration_seconds: 420,
+        max_duration_seconds: 300,
         safety_buffer_seconds: 60,
-        max_stream_time_ms: 360_000,
+        max_stream_time_ms: 240_000,
       }),
     );
     expect(mockPhInfo).toHaveBeenCalledWith(
@@ -170,6 +170,33 @@ describe("createPreemptiveTimeout", () => {
       }),
     );
 
+    timeout.clear();
+  });
+
+  it("uses the stream route limit for its pre-emptive timeout", async () => {
+    const { createPreemptiveTimeout } = await import("../stream-cancellation");
+    const abortController = new AbortController();
+    const timeout = createPreemptiveTimeout({
+      chatId: "chat-1",
+      endpoint: "/api/chat/[id]/stream",
+      abortController,
+      safetyBuffer: 60,
+    });
+
+    jest.advanceTimersByTime(229_999);
+    expect(abortController.signal.aborted).toBe(false);
+    jest.advanceTimersByTime(1);
+
+    expect(abortController.signal.aborted).toBe(true);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      "Preemptive timeout triggered",
+      expect.objectContaining({
+        endpoint: "/api/chat/[id]/stream",
+        max_duration_seconds: 290,
+        safety_buffer_seconds: 60,
+        max_stream_time_ms: 230_000,
+      }),
+    );
     timeout.clear();
   });
 
@@ -187,7 +214,7 @@ describe("createPreemptiveTimeout", () => {
       },
     });
 
-    jest.advanceTimersByTime(360_000);
+    jest.advanceTimersByTime(240_000);
 
     expect(abortController.signal.aborted).toBe(true);
     expect(mockLoggerWarn).toHaveBeenCalledWith(
