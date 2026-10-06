@@ -2,6 +2,7 @@ import { getModerationResult } from "@/lib/moderation";
 import { evaluatePaidFirstStepVariant } from "@/lib/experiments/abliterated-model";
 import type { PostHog } from "posthog-node";
 import {
+  isPersonalZaiModelSelection,
   normalizeMaxModelForSubscription,
   type ChatMode,
   type SelectedModel,
@@ -57,6 +58,7 @@ export function selectModel(
     extraUsageAvailable?: boolean;
     auxiliaryVisionEnabled?: boolean;
     directGlmVisionEnabled?: boolean;
+    personalZaiApiKeyConfigured?: boolean;
   } = {},
 ): ModelName {
   const isAgent = isAgentMode(mode);
@@ -64,7 +66,17 @@ export function selectModel(
     selectedModel,
     subscription,
     options,
+    options.personalZaiApiKeyConfigured,
   );
+  if (
+    options.personalZaiApiKeyConfigured &&
+    isPersonalZaiModelSelection(allowedSelectedModel)
+  ) {
+    if (hasImageAttachment && allowedSelectedModel !== "zai-glm-5.3-flash") {
+      return resolveTierToProviderKey("zai-glm-5.3-flash", mode);
+    }
+    return resolveTierToProviderKey(allowedSelectedModel, mode);
+  }
   // Paid Standard uses native GLM vision as well as text/PDF parsing. Resolve
   // it before the legacy media promotions so every paid plan keeps this route.
   if (
@@ -75,6 +87,9 @@ export function selectModel(
       allowedSelectedModel === "zai-glm-5.3-flash")
   ) {
     if (hasImageAttachment && allowedSelectedModel !== "zai-glm-5.3-flash") {
+      if (isPersonalZaiModelSelection(allowedSelectedModel)) {
+        return resolveTierToProviderKey("zai-glm-5.3-flash", mode);
+      }
       return mode === "agent"
         ? "model-glm-5.3-flash-agent"
         : "model-glm-5.3-flash";
@@ -701,6 +716,7 @@ export async function processChatMessages({
   allowLocalDesktopFiles = false,
   auxiliaryVisionEnabled = false,
   directGlmVisionEnabled = false,
+  personalZaiApiKeyConfigured = false,
   chatId,
   triggerRunId,
   requestId,
@@ -718,6 +734,7 @@ export async function processChatMessages({
   allowLocalDesktopFiles?: boolean;
   auxiliaryVisionEnabled?: boolean;
   directGlmVisionEnabled?: boolean;
+  personalZaiApiKeyConfigured?: boolean;
   chatId?: string;
   triggerRunId?: string;
   requestId?: string;
@@ -804,6 +821,7 @@ export async function processChatMessages({
       extraUsageAvailable,
       auxiliaryVisionEnabled,
       directGlmVisionEnabled,
+      personalZaiApiKeyConfigured,
     },
   );
 

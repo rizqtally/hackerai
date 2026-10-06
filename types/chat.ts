@@ -53,6 +53,13 @@ export const SELECTABLE_MODELS: readonly SelectedModel[] = [
   "zai-glm-5.3-flash",
 ];
 
+export const isPersonalZaiModelSelection = (
+  model: SelectedModel | null | undefined,
+): model is "zai-glm-5.2" | "zai-glm-5.3" | "zai-glm-5.3-flash" =>
+  model === "zai-glm-5.2" ||
+  model === "zai-glm-5.3" ||
+  model === "zai-glm-5.3-flash";
+
 /**
  * Map of legacy ids to the current `SelectedModel` union. Covers two prior
  * shapes:
@@ -201,8 +208,14 @@ export function withExtraUsageBillingForModel(
   extraUsageConfig: ExtraUsageConfig | undefined,
   model: SelectedModel | null | undefined,
   subscription: SubscriptionTier,
+  personalZaiApiKeyConfigured = false,
 ): ExtraUsageConfig | undefined {
-  if (!extraUsageConfig || !isMaxTierModel(model) || subscription === "ultra") {
+  if (
+    !extraUsageConfig ||
+    !isMaxTierModel(model) ||
+    subscription === "ultra" ||
+    (personalZaiApiKeyConfigured && isPersonalZaiModelSelection(model))
+  ) {
     return extraUsageConfig;
   }
 
@@ -216,8 +229,13 @@ export const normalizeMaxModelForSubscription = (
   model: SelectedModel | null | undefined,
   subscription: SubscriptionTier,
   options: MaxModelEntitlementOptions = {},
+  personalZaiApiKeyConfigured = false,
 ): SelectedModel | null | undefined => {
-  if (isMaxTierModel(model) && !canUseMaxModel(subscription, options)) {
+  if (
+    isMaxTierModel(model) &&
+    !(personalZaiApiKeyConfigured && isPersonalZaiModelSelection(model)) &&
+    !canUseMaxModel(subscription, options)
+  ) {
     return "hackerai-pro";
   }
   return model;
@@ -226,16 +244,28 @@ export const normalizeMaxModelForSubscription = (
 export function normalizeSelectedModelForSubscription(
   model: SelectedModel | null | undefined,
   subscription: SubscriptionTier,
+  personalZaiApiKeyConfigured = false,
 ): SelectedModel {
-  if (subscription === "free") return "auto";
+  if (
+    subscription === "free" &&
+    !(personalZaiApiKeyConfigured && isPersonalZaiModelSelection(model))
+  ) {
+    return "auto";
+  }
   return model ?? "auto";
 }
 
 export function normalizeSelectedModelOverrideForSubscription(
   model: SelectedModel | null | undefined,
   subscription: SubscriptionTier,
+  personalZaiApiKeyConfigured = false,
 ): SelectedModel | undefined {
-  if (subscription === "free") return "auto";
+  if (
+    subscription === "free" &&
+    !(personalZaiApiKeyConfigured && isPersonalZaiModelSelection(model))
+  ) {
+    return "auto";
+  }
   return model ?? undefined;
 }
 
