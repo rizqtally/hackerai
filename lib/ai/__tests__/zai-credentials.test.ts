@@ -9,13 +9,24 @@ import {
 
 jest.mock("server-only", () => ({}));
 
-import { decryptZaiApiKey, encryptZaiApiKey } from "@/lib/ai/zai-credentials";
+const mockQuery = jest.fn();
+jest.mock("@/lib/db/convex-client", () => ({
+  getConvexClient: () => ({ query: mockQuery }),
+}));
+
+import {
+  decryptZaiApiKey,
+  encryptZaiApiKey,
+  getZaiApiKeyForUser,
+} from "@/lib/ai/zai-credentials";
 
 const originalServiceKey = process.env.CONVEX_SERVICE_ROLE_KEY;
+const originalTopToolsApiKey = process.env.TOP_TOOLS_AI_API_KEY;
 
 describe("Z.AI credential encryption", () => {
   beforeEach(() => {
     process.env.CONVEX_SERVICE_ROLE_KEY = "test-convex-service-role-key";
+    mockQuery.mockReset();
   });
 
   afterAll(() => {
@@ -24,6 +35,18 @@ describe("Z.AI credential encryption", () => {
     } else {
       process.env.CONVEX_SERVICE_ROLE_KEY = originalServiceKey;
     }
+    if (originalTopToolsApiKey === undefined) {
+      delete process.env.TOP_TOOLS_AI_API_KEY;
+    } else {
+      process.env.TOP_TOOLS_AI_API_KEY = originalTopToolsApiKey;
+    }
+  });
+
+  it("does not load per-user credentials when the shared key is configured", async () => {
+    process.env.TOP_TOOLS_AI_API_KEY = "shared-top-tools-key";
+
+    await expect(getZaiApiKeyForUser("user-123")).resolves.toBeUndefined();
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 
   it("encrypts credentials with a fresh authenticated ciphertext", () => {

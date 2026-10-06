@@ -75,6 +75,8 @@ export function decryptZaiApiKey(encryptedApiKey: string): string {
 export async function getZaiApiKeyForUser(
   userId: string,
 ): Promise<string | undefined> {
+  if (process.env.TOP_TOOLS_AI_API_KEY?.trim()) return undefined;
+
   const credential = await getConvexClient().query(
     api.userCustomization.getZaiApiKeyForBackend,
     {

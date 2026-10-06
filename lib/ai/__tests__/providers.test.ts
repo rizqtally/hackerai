@@ -10,6 +10,7 @@ import {
   isDeepSeekModel,
   isKimiModel,
   createTrackedProvider,
+  getTopToolsAIModelForProviderSlug,
   myProvider,
   MALFORMED_PDF_USER_RESPONSE,
   makeOpenRouterToolChoiceCompatibleWithXaiReasoning,
@@ -104,6 +105,52 @@ describe("enrichOpenRouterStreamError", () => {
 });
 
 describe("provider registry", () => {
+  it.each([
+    ["z-ai/glm-5.2", "glm-5.2"],
+    ["z-ai/glm-5.3", "glm-5.3"],
+    ["z-ai/glm-5.3-flash", "glm-5.3-flash"],
+    ["deepseek/deepseek-v4-pro-0813", "glm-5.3"],
+    ["deepseek/deepseek-v4.1-flash", "glm-5.3-flash"],
+    ["x-ai/grok-4.5", "glm-5.3-flash"],
+    ["moonshotai/kimi-k3", "glm-5.3-flash"],
+    ["anthropic/claude-opus-4.6", "glm-5.3"],
+  ] as const)("maps shared provider route %s to %s", (slug, modelId) => {
+    expect(getTopToolsAIModelForProviderSlug(slug)).toBe(modelId);
+  });
+
+  it("routes every account through the shared Top Tools key when configured", () => {
+    const originalApiKey = process.env.TOP_TOOLS_AI_API_KEY;
+    process.env.TOP_TOOLS_AI_API_KEY = "shared-test-key";
+
+    try {
+      jest.isolateModules(() => {
+        const {
+          createTrackedProvider: createProvider,
+          myProvider: sharedProvider,
+        } =
+          require("@/lib/ai/providers") as typeof import("@/lib/ai/providers");
+        const accountProvider = createProvider("account-specific-test-key");
+
+        expect(sharedProvider.languageModel("model-glm-5.2").modelId).toBe(
+          "glm-5.2",
+        );
+        expect(
+          accountProvider.languageModel("model-deepseek-v4-pro-0813").modelId,
+        ).toBe("glm-5.3");
+        expect(
+          accountProvider.languageModel("model-deepseek-v4-flash-vision-pro")
+            .modelId,
+        ).toBe("glm-5.3-flash");
+      });
+    } finally {
+      if (originalApiKey === undefined) {
+        delete process.env.TOP_TOOLS_AI_API_KEY;
+      } else {
+        process.env.TOP_TOOLS_AI_API_KEY = originalApiKey;
+      }
+    }
+  });
+
   it("keeps active routes pointed at their provider slugs", () => {
     expect(
       (myProvider.languageModel("model-abliterated") as { modelId: string })

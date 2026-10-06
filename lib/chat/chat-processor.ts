@@ -84,7 +84,7 @@ export function selectModel(
   // Pro/Pro+ Auto uses GLM Flash for lower-cost direct vision.
   // Other paid image routes retain DeepSeek Vision. The auxiliary treatment
   // is reserved for MiniMax summary recovery after direct routes fail.
-  // PDFs remain on DeepSeek via OpenRouter's file parser in both routes.
+  // The provider registry maps these existing PDF model keys to shared GLM routes when configured.
   const isFreeAsk = !isAgent && subscription === "free";
   const hasAskImage =
     !isAgent && !!hasImageAttachment && !options.auxiliaryVisionEnabled;

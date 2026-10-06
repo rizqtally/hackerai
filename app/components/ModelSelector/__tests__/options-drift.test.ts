@@ -83,32 +83,32 @@ describe("ModelSelector tier ↔ provider drift", () => {
     }
   });
 
-  it("discloses GLM 5.3 Flash for Agent Standard", () => {
+  it("discloses shared Top Tools GLM models for Standard", () => {
     expect(
       AGENT_MODEL_OPTIONS.find((option) => option.id === "hackerai-standard")
         ?.poweredBy,
-    ).toBe("Z.ai GLM 5.3 Flash");
+    ).toBe("Top Tools AI · GLM 5.3 Flash");
   });
 
-  it("discloses each mode's provider for HackerAI Pro", () => {
+  it("discloses each mode's shared Top Tools model for HackerAI Pro", () => {
     expect(
       ASK_MODEL_OPTIONS.find((option) => option.id === "hackerai-pro")
         ?.poweredBy,
-    ).toBe("DeepSeek V4 Pro 0813");
+    ).toBe("Top Tools AI · GLM 5.3");
     expect(
       AGENT_MODEL_OPTIONS.find((option) => option.id === "hackerai-pro")
         ?.poweredBy,
-    ).toBe("DeepSeek V4.1 Flash");
+    ).toBe("Top Tools AI · GLM 5.3 Flash");
   });
 
-  it("discloses GLM 5.3 for HackerAI Max", () => {
+  it("discloses shared GLM 5.3 for HackerAI Max", () => {
     expect(
       ASK_MODEL_OPTIONS.find((option) => option.id === "hackerai-max")
         ?.poweredBy,
-    ).toBe("Z.ai GLM 5.3");
+    ).toBe("Top Tools AI · GLM 5.3");
     expect(
       AGENT_MODEL_OPTIONS.find((option) => option.id === "hackerai-max")
         ?.poweredBy,
-    ).toBe("Z.ai GLM 5.3");
+    ).toBe("Top Tools AI · GLM 5.3");
   });
 });

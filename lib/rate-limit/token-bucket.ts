@@ -172,11 +172,14 @@ const MODEL_PRICING_MAP: Record<string, ModelPricing> = {
   "model-opus-4.6": KIMI_K3_PRICING,
   // Baseline OpenRouter rates: $0.76 in / $2.42 out per 1M tokens.
   "model-glm-5.2": GLM_5_2_PRICING,
-  // OpenRouter rates: $1.40 in / $4.40 out / $0.26 cached input per 1M tokens.
+  "glm-5.2": GLM_5_2_PRICING,
+  // OpenRouter baseline: $1.40 in / $4.40 out per 1M tokens.
   "model-glm-5.3": GLM_5_3_PRICING,
+  "glm-5.3": GLM_5_3_PRICING,
   "model-glm-5.3-flash": GLM_5_3_FLASH_PRICING,
   "model-glm-5.3-flash-pro": GLM_5_3_FLASH_PRICING,
   "model-glm-5.3-flash-agent": GLM_5_3_FLASH_PRICING,
+  "glm-5.3-flash": GLM_5_3_FLASH_PRICING,
   // OpenRouter rates: $3.00 in / $15.00 out / $0.30 cached input per 1M tokens.
   "model-kimi-k3": KIMI_K3_PRICING,
   // Provider response ids can reach accounting before local-key normalization.

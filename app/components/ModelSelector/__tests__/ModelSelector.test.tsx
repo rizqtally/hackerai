@@ -128,7 +128,7 @@ describe("ModelSelector", () => {
       screen.getByRole("button", { name: /HackerAI Standard/i }),
     );
     expect(
-      await screen.findAllByText("Powered by Z.ai GLM 5.3 Flash"),
+      await screen.findAllByText("Powered by Top Tools AI · GLM 5.3 Flash"),
     ).not.toHaveLength(0);
 
     await user.unhover(
@@ -136,7 +136,7 @@ describe("ModelSelector", () => {
     );
     await user.hover(screen.getByRole("button", { name: /HackerAI Pro/i }));
     expect(
-      await screen.findAllByText("Powered by DeepSeek V4.1 Flash"),
+      await screen.findAllByText("Powered by Top Tools AI · GLM 5.3 Flash"),
     ).not.toHaveLength(0);
   });
 
