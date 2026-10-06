@@ -260,6 +260,7 @@ describe("checkRateLimit", () => {
         undefined,
         undefined,
         undefined,
+        true,
       );
       expect(result.remaining).toBe(5000);
     });
@@ -276,6 +277,7 @@ describe("checkRateLimit", () => {
         undefined,
         undefined,
         undefined,
+        true,
       );
       expect(result.remaining).toBe(5000);
     });
@@ -296,6 +298,7 @@ describe("checkRateLimit", () => {
         { enabled: true, hasBalance: true, autoReloadEnabled: false },
         undefined,
         undefined,
+        true,
       );
     });
 
@@ -311,6 +314,7 @@ describe("checkRateLimit", () => {
         undefined,
         undefined,
         undefined,
+        true,
       );
     });
 
@@ -330,6 +334,7 @@ describe("checkRateLimit", () => {
         undefined,
         undefined,
         undefined,
+        true,
       );
       expect(mockCheckTokenBucketLimit).toHaveBeenNthCalledWith(
         2,
@@ -339,6 +344,7 @@ describe("checkRateLimit", () => {
         undefined,
         undefined,
         undefined,
+        true,
       );
     });
   });

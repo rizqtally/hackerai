@@ -75,6 +75,7 @@ export type CreateToolsRuntimePolicy = {
   triggerRegion?: TriggerRunRegion;
   environment?: string;
   keepE2BLeaseAliveForRun?: boolean;
+  accessTier?: SubscriptionTier;
 };
 
 export type SandboxSessionUsage = {
@@ -116,6 +117,7 @@ export const createTools = (
   auxiliaryVision?: ToolContext["auxiliaryVision"],
   runtimePolicy: CreateToolsRuntimePolicy = {},
 ) => {
+  const accessTier = runtimePolicy.accessTier ?? subscription ?? "free";
   let sandbox: AnySandbox | null = null;
   let sandboxCostSegmentStartedAt: number | null = null;
   let sandboxCostProvider: CloudSandboxProvider | null = null;
@@ -201,11 +203,11 @@ export const createTools = (
     }
   };
 
-  // Cloud protection: free agent users must use a user-owned execution host.
-  if (subscription === "free" && isAgentMode(mode)) {
+  // Accounts without Pro feature access must use a user-owned execution host.
+  if (accessTier === "free" && isAgentMode(mode)) {
     if (!sandboxPreference || sandboxPreference === "e2b") {
       throw new Error(
-        "Free agent mode requires a local sandbox. Cloud sandboxes are not available on the free plan.",
+        "Agent mode without Pro feature access requires a local sandbox.",
       );
     }
   }
@@ -219,7 +221,7 @@ export const createTools = (
           sandboxPreference,
           serviceKey,
           isE2BSandbox(sandbox) ? sandbox : null,
-          subscription,
+          accessTier,
           recordSandboxBoot,
           workingDirectory,
           triggerRunId,

@@ -315,9 +315,7 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     if (!Array.isArray(entitlements)) return null;
     return resolveSubscriptionTier(entitlements);
   }, [entitlements]);
-  const accessTier = user
-    ? resolveProductAccessTier(subscription)
-    : "free";
+  const accessTier = user ? resolveProductAccessTier(subscription) : "free";
   const refreshAuthTokenAfterEntitlementRefresh = useCallback(async () => {
     clearSharedToken();
 
@@ -614,12 +612,13 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     if (subscription === "free" && !freeSubscriptionResolved) return;
     const normalizedModel = normalizeSelectedModelForSubscription(
       selectedModel,
-      subscription,
+      accessTier,
     );
     if (normalizedModel !== selectedModel) {
       setSelectedModelRaw(normalizedModel);
     }
   }, [
+    accessTier,
     freeSubscriptionResolved,
     selectedModel,
     subscription,
@@ -635,6 +634,9 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     subscriptionFromEntitlements !== "free"
       ? subscriptionFromEntitlements
       : subscription;
+  const paidAgentAccessTier = user
+    ? resolveProductAccessTier(paidAgentSubscription)
+    : "free";
   const agentFirstSubscriptionResolved =
     paidAgentSubscription === "free"
       ? freeSubscriptionResolved
@@ -702,6 +704,7 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
       control_variant_available: false,
       exposure_trigger: "default_applied",
       subscription: paidAgentSubscription,
+      product_access_tier: paidAgentAccessTier,
       eligible_subscription_tier: agentDefaultDecision.eligibleSubscriptionTier,
       selected_subscription_tier: paidAgentSubscription,
       selection_reason: agentDefaultDecision.selectionReason,
@@ -745,7 +748,7 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     Boolean(user) &&
     subscriptionResolved &&
     !isCheckingProPlan &&
-    paidAgentSubscription !== "free";
+    paidAgentAccessTier !== "free";
   const freeDesktopAgentOnlyActive =
     Boolean(user) &&
     accessTier === "free" &&
@@ -1382,10 +1385,9 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     isTodoPanelExpanded,
     setIsTodoPanelExpanded,
 
-  subscription,
-  accessTier,
-  isCheckingProPlan,
-
+    subscription,
+    accessTier,
+    isCheckingProPlan,
 
     getInput,
     clearInput,

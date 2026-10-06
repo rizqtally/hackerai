@@ -68,6 +68,7 @@ function GlobalStateProbe() {
     sandboxPreference,
     selectedModel,
     subscription,
+    accessTier,
   } = useGlobalState();
 
   return (
@@ -85,6 +86,7 @@ function GlobalStateProbe() {
       <div data-testid="sandbox-preference">{sandboxPreference}</div>
       <div data-testid="selected-model">{selectedModel}</div>
       <div data-testid="subscription">{subscription}</div>
+      <div data-testid="access-tier">{accessTier}</div>
     </>
   );
 }
@@ -192,7 +194,7 @@ describe("GlobalStateProvider agent defaults", () => {
     expect(onNavigate).toHaveBeenCalledWith("destination-chat");
   });
 
-  it("makes free Desktop users Agent-only before token refresh finishes", async () => {
+  it("gives authenticated free-tier Desktop users Pro feature access", async () => {
     window.__TAURI_INTERNALS__ = {};
     const refreshAuth = jest.fn(() => new Promise<void>(() => {}));
     mockAuthUser(undefined, { refreshAuth });
@@ -224,9 +226,10 @@ describe("GlobalStateProvider agent defaults", () => {
     });
     await waitFor(() => {
       expect(screen.getByTestId("subscription")).toHaveTextContent("free");
-      expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("false");
+      expect(screen.getByTestId("access-tier")).toHaveTextContent("pro");
+      expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("true");
       expect(screen.getByTestId("free-desktop-agent-only")).toHaveTextContent(
-        "true",
+        "false",
       );
       expect(screen.getByTestId("chat-mode")).toHaveTextContent("agent");
     });
@@ -260,7 +263,7 @@ describe("GlobalStateProvider agent defaults", () => {
     ).toBe(false);
   });
 
-  it("preserves the paid model between a failed Tauri refresh and its retry", async () => {
+  it("preserves the saved Pro model while granting Agent access during Tauri refresh", async () => {
     jest.useFakeTimers();
     window.__TAURI_INTERNALS__ = {};
     window.localStorage.setItem("selected_model", "hackerai-pro");
@@ -290,13 +293,15 @@ describe("GlobalStateProvider agent defaults", () => {
     expect(screen.getByTestId("free-desktop-agent-only")).toHaveTextContent(
       "false",
     );
+    expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("true");
+    expect(screen.getByTestId("access-tier")).toHaveTextContent("pro");
     expect(screen.getByTestId("selected-model")).toHaveTextContent(
       "hackerai-pro",
     );
-    expect(screen.getByTestId("chat-mode")).toHaveTextContent("ask");
+    expect(screen.getByTestId("chat-mode")).toHaveTextContent("agent");
   });
 
-  it("forces returning free Desktop users out of saved Ask mode", async () => {
+  it("forces returning authenticated free-tier users out of saved Ask mode", async () => {
     window.__TAURI_INTERNALS__ = {};
     window.localStorage.setItem("chat_mode", "ask");
     window.localStorage.setItem("agent_permission_mode", "full_access");
@@ -318,8 +323,9 @@ describe("GlobalStateProvider agent defaults", () => {
     );
 
     await waitFor(() => {
+      expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("true");
       expect(screen.getByTestId("free-desktop-agent-only")).toHaveTextContent(
-        "true",
+        "false",
       );
       expect(screen.getByTestId("chat-mode")).toHaveTextContent("agent");
     });
@@ -328,7 +334,7 @@ describe("GlobalStateProvider agent defaults", () => {
     );
   });
 
-  it("reveals free web mode access when AuthKit omits entitlements", async () => {
+  it("gives free web accounts Pro feature access when AuthKit omits entitlements", async () => {
     const refreshAuth = jest.fn(() => new Promise<void>(() => {}));
     mockAuthUser(undefined, { refreshAuth });
     global.fetch = jest.fn((input) => {
@@ -360,7 +366,9 @@ describe("GlobalStateProvider agent defaults", () => {
       );
     });
     expect(screen.getByTestId("subscription")).toHaveTextContent("free");
-    expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("false");
+    expect(screen.getByTestId("access-tier")).toHaveTextContent("pro");
+    expect(screen.getByTestId("paid-agent-only")).toHaveTextContent("true");
+    expect(screen.getByTestId("chat-mode")).toHaveTextContent("agent");
   });
 
   it("keeps paid web users Agent-only when AuthKit omits entitlements", async () => {

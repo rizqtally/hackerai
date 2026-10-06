@@ -16,7 +16,6 @@ export function ChatModeSelector({ className }: ChatModeSelectorProps) {
   const {
     chatMode,
     setChatMode,
-    subscription,
     accessTier,
     hasLocalSandbox,
     desktopBridgeStatus,
@@ -67,7 +66,7 @@ export function ChatModeSelector({ className }: ChatModeSelectorProps) {
         <DropdownMenu>
           <ModeSelectorTrigger
             chatMode={chatMode}
-            isPaid={subscription !== "free"}
+            isPaid={accessTier !== "free"}
           />
           <ModeSelectorContent
             setChatMode={setChatMode}

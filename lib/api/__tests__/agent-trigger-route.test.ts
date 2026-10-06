@@ -52,7 +52,7 @@ jest.mock("@/app/posthog", () => ({
 jest.mock("next/server", () => ({
   after: jest.fn(),
   NextRequest: class NextRequest {},
-  NextResponse: class NextResponse {},
+  NextResponse: MockResponse,
 }));
 
 jest.mock("@trigger.dev/sdk", () => ({
@@ -444,6 +444,7 @@ describe("regional subscription gate before Agent dispatch", () => {
     mockGetUserIDAndPro.mockResolvedValue({
       userId: "user-free",
       subscription: "free",
+      accessTier: "pro",
     });
   });
   afterEach(() => {

@@ -314,7 +314,7 @@ export class HybridSandboxManager implements SandboxManager {
     private sandboxPreference: SandboxPreference = "e2b",
     private serviceKey: string,
     initialSandbox?: AnySandbox | null,
-    private subscription?: SubscriptionTier,
+    private accessTier?: SubscriptionTier,
     private onBoot?: (info: SandboxBootInfo) => void,
     private workingDirectory?: string,
     private requestId?: string,
@@ -625,7 +625,7 @@ export class HybridSandboxManager implements SandboxManager {
 
     const connection = await this.getPreferredOrFallbackConnection();
     if (!connection) {
-      return this.subscription !== "free";
+      return this.accessTier !== "free";
     }
 
     return connection.capabilities?.pty !== false;
@@ -749,10 +749,10 @@ export class HybridSandboxManager implements SandboxManager {
       return this.getCloudSandbox();
     }
 
-    // If preference is E2B, always use E2B (but block for free users)
+    // If preference is E2B, always use E2B when the account has Pro access.
     if (this.sandboxPreference === "e2b") {
-      if (this.subscription === "free") {
-        throw new Error("Cloud sandbox requires a paid plan.");
+      if (this.accessTier === "free") {
+        throw new Error("Cloud sandbox requires Pro feature access.");
       }
       return this.getCloudSandbox();
     }
@@ -801,10 +801,10 @@ export class HybridSandboxManager implements SandboxManager {
       return { sandbox: this.sandbox! };
     }
 
-    // Free users cannot fall back to E2B — must use local sandbox
-    if (this.subscription === "free") {
+    // Accounts without Pro feature access cannot fall back to E2B.
+    if (this.accessTier === "free") {
       throw new Error(
-        "Local sandbox disconnected. Reconnect your desktop app or upgrade to Pro for cloud sandbox.",
+        "Local sandbox disconnected. Reconnect your selected local sandbox.",
       );
     }
 
@@ -1010,7 +1010,7 @@ export class HybridSandboxManager implements SandboxManager {
       return this.buildSandboxContext(firstAvailable);
     }
 
-    if (this.subscription !== "free") {
+    if (this.accessTier !== "free") {
       this.recordFallbackInfo({
         occurred: true,
         reason: "no_local_connections",

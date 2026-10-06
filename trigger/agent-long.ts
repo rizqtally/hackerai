@@ -2734,6 +2734,7 @@ export const agentLongTask = task({
                 triggerRegion,
                 environment: ctx.environment.type,
                 keepE2BLeaseAliveForRun: true,
+                accessTier,
                 ...(subagentsEnabled
                   ? {
                       additionalTools: (toolContext) => ({

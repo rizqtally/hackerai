@@ -5,6 +5,7 @@ import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import type { SubscriptionTier } from "@/types";
 
 let mockSubscription: SubscriptionTier = "free";
+let mockUserPresent = false;
 let mockChatModeAccessResolved = true;
 let mockPaidAgentOnlyActive = false;
 let mockFreeDesktopAgentOnlyActive = false;
@@ -78,10 +79,16 @@ jest.mock("@/app/contexts/GlobalState", () => ({
     selectedModel: "auto",
     setSelectedModel: jest.fn(),
     subscription: mockSubscription,
-    accessTier: mockSubscription === "free" ? "pro" : mockSubscription,
+    accessTier: mockUserPresent
+      ? mockSubscription === "free"
+        ? "pro"
+        : mockSubscription
+      : "free",
     chatModeAccessResolved: mockChatModeAccessResolved,
+    paidAgentOnlyActive:
+      mockPaidAgentOnlyActive ||
+      (mockUserPresent && mockChatModeAccessResolved),
     hasLocalSandbox: mockHasLocalSandbox,
-    paidAgentOnlyActive: mockPaidAgentOnlyActive,
     freeDesktopAgentOnlyActive: mockFreeDesktopAgentOnlyActive,
     sandboxPreference: "e2b",
     setSandboxPreference: mockSetSandboxPreference,
@@ -106,6 +113,7 @@ const defaultProps = {
 };
 
 const mockAuthUser = (user: unknown) => {
+  mockUserPresent = Boolean(user);
   jest.mocked(useAuth).mockReturnValue({
     user,
     entitlements: [],
@@ -150,13 +158,13 @@ describe("ChatInputToolbar", () => {
     expect(screen.getByTestId("model-selector")).toBeInTheDocument();
   });
 
-  it("shows computer activation only for logged-in free Ask users without a local sandbox", () => {
+  it("does not show free Ask activation to logged-in Pro-access users", () => {
     mockAuthUser({ id: "user_123" });
 
     const { rerender } = render(<ChatInputToolbar {...defaultProps} />);
     expect(
-      screen.getByTestId("free-ask-computer-activation"),
-    ).toBeInTheDocument();
+      screen.queryByTestId("free-ask-computer-activation"),
+    ).not.toBeInTheDocument();
 
     mockHasLocalSandbox = true;
     rerender(<ChatInputToolbar {...defaultProps} />);
@@ -314,15 +322,15 @@ describe("ChatInputToolbar", () => {
     expect(screen.queryByTestId("chat-mode-selector")).not.toBeInTheDocument();
   });
 
-  it("shows the mode selector after access resolves for eligible users", () => {
+  it("hides the mode selector for authenticated Pro-access users", () => {
     mockAuthUser({ id: "user_123" });
 
     render(<ChatInputToolbar {...defaultProps} />);
 
-    expect(screen.getByTestId("chat-mode-selector")).toBeInTheDocument();
+    expect(screen.queryByTestId("chat-mode-selector")).not.toBeInTheDocument();
   });
 
-  it("enables the paid visual treatment only for paid subscriptions", () => {
+  it("uses Pro visual treatment for signed-in users", () => {
     const { rerender } = render(<ChatInputToolbar {...defaultProps} />);
 
     expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute(
@@ -330,7 +338,7 @@ describe("ChatInputToolbar", () => {
       "false",
     );
 
-    mockSubscription = "pro";
+    mockAuthUser({ id: "user_123" });
     rerender(<ChatInputToolbar {...defaultProps} />);
 
     expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute(

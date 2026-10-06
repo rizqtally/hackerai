@@ -287,9 +287,9 @@ const ChatInputContent = ({
     setSandboxPreference,
     selectedModel,
     setSelectedModel,
-  subscription,
-  accessTier,
-  isCheckingProPlan,
+    subscription,
+    accessTier,
+    isCheckingProPlan,
     hasLocalSandbox,
     localConnections,
     freeDesktopAgentOnlyActive,
@@ -674,53 +674,58 @@ const ChatInputContent = ({
     accessTier === "free" &&
     isAgentMode(chatMode) &&
     (!isTauriEnvironment() || freeDesktopAgentOnlyActive);
-  const freeAgentSandboxAvailable = freeDesktopAgentOnlyActive
+  const selectedLocalSandboxAvailable = isDesktopPreference(sandboxPreference)
     ? isFreeDesktopSandboxAvailable({
         sandboxPreference,
         desktopBridgeActive: desktopBridgeStatus === "connected",
         localConnections,
       })
     : hasLocalSandbox;
+  const shouldMonitorAgentSandbox =
+    isFreeAgent ||
+    (Boolean(user) &&
+      !isCheckingProPlan &&
+      isAgentMode(chatMode) &&
+      sandboxPreference !== "e2b");
 
-  const prevFreeAgentSandboxRef = useRef({
+  const previousAgentSandboxRef = useRef({
     sandboxPreference,
-    available: freeAgentSandboxAvailable,
-    isFreeAgent,
+    available: selectedLocalSandboxAvailable,
+    isWatching: shouldMonitorAgentSandbox,
   });
   useEffect(() => {
-    const previous = prevFreeAgentSandboxRef.current;
+    const previous = previousAgentSandboxRef.current;
     const wasConnected =
-      previous.isFreeAgent &&
+      previous.isWatching &&
       previous.sandboxPreference === sandboxPreference &&
       previous.available;
-    prevFreeAgentSandboxRef.current = {
+    previousAgentSandboxRef.current = {
       sandboxPreference,
-      available: freeAgentSandboxAvailable,
-      isFreeAgent,
+      available: selectedLocalSandboxAvailable,
+      isWatching: shouldMonitorAgentSandbox,
     };
 
-    if (!isFreeAgent) return;
-    // Only warn when the same selected sandbox loses availability. Restoring a
-    // different task or resolving plan access is not a connection lifecycle event.
-    if (!freeAgentSandboxAvailable) {
-      if (freeDesktopAgentOnlyActive || sandboxPreference !== "e2b") {
-        if (wasConnected) {
-          const selectedDesktop = isDesktopPreference(sandboxPreference);
-          toast.info(
-            selectedDesktop
-              ? "Desktop sandbox disconnected."
-              : "Local sandbox disconnected.",
-            {
-              description: selectedDesktop
-                ? "Reconnect the Desktop sandbox to keep using Agent."
-                : "Reconnect the selected local runner to keep using Agent.",
-              duration: 5000,
-            },
-          );
-        }
-        return;
-      }
+    if (!shouldMonitorAgentSandbox || selectedLocalSandboxAvailable) return;
+    if (wasConnected) {
+      const selectedDesktop = isDesktopPreference(sandboxPreference);
+      toast.info(
+        selectedDesktop
+          ? "Desktop sandbox disconnected."
+          : "Local sandbox disconnected.",
+        {
+          description: selectedDesktop
+            ? "Reconnect the Desktop sandbox to keep using Agent."
+            : "Reconnect the selected local runner to keep using Agent.",
+          duration: 5000,
+        },
+      );
+    }
 
+    if (
+      isFreeAgent &&
+      !freeDesktopAgentOnlyActive &&
+      sandboxPreference === "e2b"
+    ) {
       setChatMode("ask");
       if (wasConnected) {
         toast.info("Local sandbox disconnected. Switched to Ask mode.", {
@@ -730,11 +735,12 @@ const ChatInputContent = ({
       }
     }
   }, [
-    freeAgentSandboxAvailable,
     freeDesktopAgentOnlyActive,
     isFreeAgent,
     sandboxPreference,
+    selectedLocalSandboxAvailable,
     setChatMode,
+    shouldMonitorAgentSandbox,
   ]);
 
   useEffect(() => {
@@ -752,7 +758,7 @@ const ChatInputContent = ({
   }, [isFreeAgent]);
 
   const freeDesktopSandboxUnavailableReason =
-    freeDesktopAgentOnlyActive && !freeAgentSandboxAvailable
+    freeDesktopAgentOnlyActive && !selectedLocalSandboxAvailable
       ? isDesktopPreference(sandboxPreference)
         ? desktopBridgeStatus === "connecting"
           ? "Desktop sandbox is reconnecting"

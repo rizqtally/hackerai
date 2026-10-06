@@ -19,7 +19,7 @@ describe("assertFreeAgentGates", () => {
     expect(() =>
       assertFreeAgentGates({
         mode: "agent",
-        subscription: "free",
+        accessTier: "free",
         sandboxPreference: "desktop",
       }),
     ).not.toThrow();
@@ -29,7 +29,7 @@ describe("assertFreeAgentGates", () => {
     expect(() =>
       assertFreeAgentGates({
         mode: "agent",
-        subscription: "free",
+        accessTier: "free",
         sandboxPreference: "e2b",
       }),
     ).toThrow(ChatSDKError);
@@ -40,9 +40,9 @@ describe("assertChatModeAccess", () => {
   it.each([undefined, null, "temporary", "Agent", 1])(
     "rejects invalid chat mode %p",
     (mode) => {
-      expect(() =>
-        assertChatModeAccess({ mode, subscription: "free" }),
-      ).toThrow(ChatSDKError);
+      expect(() => assertChatModeAccess({ mode, accessTier: "free" })).toThrow(
+        ChatSDKError,
+      );
     },
   );
 
@@ -57,7 +57,7 @@ describe("assertChatModeAccess", () => {
 
   it("allows Ask mode for free users", () => {
     expect(() =>
-      assertChatModeAccess({ mode: "ask", subscription: "free" }),
+      assertChatModeAccess({ mode: "ask", accessTier: "free" }),
     ).not.toThrow();
   });
 

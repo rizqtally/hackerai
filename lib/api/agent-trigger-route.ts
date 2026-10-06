@@ -476,7 +476,7 @@ export const createAgentTriggerPost =
         subscriptionFirstCountryFromRequest(req);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription: accessTier,
+        subscription,
         country: regionalSubscriptionCountry,
         surface: "agent",
       });
@@ -487,7 +487,7 @@ export const createAgentTriggerPost =
 
       assertFreeAgentGates({
         mode: "agent",
-        subscription: accessTier,
+        accessTier,
         sandboxPreference,
       });
 
@@ -579,7 +579,7 @@ export const createAgentTriggerPost =
             sandboxPreference,
             process.env.CONVEX_SERVICE_ROLE_KEY!,
             null,
-            subscription,
+            accessTier,
           );
           await sandboxManager.getSandboxContextForPrompt();
           assertLocalSandboxFallbackAllowed({

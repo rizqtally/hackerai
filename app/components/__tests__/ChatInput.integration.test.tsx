@@ -269,8 +269,10 @@ describe("ChatInput - Integration Tests", () => {
       mockSandboxState = {
         chatMode: "agent",
         subscription: "free",
+        accessTier: "pro",
+        paidAgentOnlyActive: true,
         isCheckingProPlan: false,
-        freeDesktopAgentOnlyActive: true,
+        freeDesktopAgentOnlyActive: false,
         sandboxPreference: "desktop",
         desktopBridgeStatus: "connected",
         localConnections: [],
@@ -406,7 +408,11 @@ describe("ChatInput - Integration Tests", () => {
       };
       const { rerender } = render(ui());
       await screen.findByRole("textbox");
-      mockSandboxState = { ...mockSandboxState, localConnections: [] };
+      mockSandboxState = {
+        ...mockSandboxState,
+        localConnections: [],
+        hasLocalSandbox: false,
+      };
       rerender(ui());
       expect(toast.info).toHaveBeenCalledWith(
         "Local sandbox disconnected.",
@@ -417,7 +423,7 @@ describe("ChatInput - Integration Tests", () => {
       );
     });
 
-    it("still switches free web Agent to Ask when its local connection is lost on the Cloud default", async () => {
+    it("keeps Agent mode available when a local connection is lost on the Cloud default", async () => {
       const setChatMode = jest.fn();
       mockSandboxState = {
         ...mockSandboxState,
@@ -430,11 +436,8 @@ describe("ChatInput - Integration Tests", () => {
       await screen.findByRole("textbox");
       mockSandboxState = { ...mockSandboxState, hasLocalSandbox: false };
       rerender(ui());
-      expect(setChatMode).toHaveBeenCalledWith("ask");
-      expect(toast.info).toHaveBeenCalledWith(
-        "Local sandbox disconnected. Switched to Ask mode.",
-        expect.any(Object),
-      );
+      expect(setChatMode).not.toHaveBeenCalledWith("ask");
+      expect(toast.info).not.toHaveBeenCalled();
     });
   });
 

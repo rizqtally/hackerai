@@ -601,6 +601,7 @@ const ChatContent = ({ autoResume }: { autoResume: boolean }) => {
     selectedModel,
     setSelectedModel,
     subscription,
+    accessTier,
     activeProjectId,
     surveyActivation,
     setSurveyActivation,
@@ -715,7 +716,7 @@ const ChatContent = ({ autoResume }: { autoResume: boolean }) => {
   const agentPermissionModeRef = useLatestRef(agentPermissionMode);
   const requestSelectedModel = normalizeSelectedModelForSubscription(
     selectedModel,
-    subscription,
+    accessTier,
   );
   const shouldUseAgentLong = shouldUseAgentLongForAgent({
     mode: chatMode,

@@ -35,13 +35,13 @@ export function ChatInputToolbar({
     selectedModel,
     setSandboxPreference,
     setSelectedModel,
-    subscription,
+    accessTier,
   } = useGlobalState();
   const { user } = useAuth();
   const showFreeAskComputerActivation = Boolean(
     chatModeAccessResolved &&
     user &&
-    subscription === "free" &&
+    accessTier === "free" &&
     chatMode === "ask" &&
     !hasLocalSandbox,
   );
@@ -105,7 +105,7 @@ export function ChatInputToolbar({
         <SubmitStopButton
           {...submitStopProps}
           chatMode={chatMode}
-          isPaid={subscription !== "free"}
+          isPaid={accessTier !== "free"}
           useNeutralAgentStyle={freeDesktopAgentOnlyActive}
           isOnline={isOnline}
         />

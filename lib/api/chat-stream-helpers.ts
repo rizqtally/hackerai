@@ -1459,38 +1459,38 @@ export async function applyPrepareStepReminders(
  */
 export function assertFreeAgentGates(args: {
   mode: ChatMode;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
   sandboxPreference: SandboxPreference | undefined;
 }): void {
-  const { mode, subscription, sandboxPreference } = args;
-  if (!isAgentMode(mode) || subscription !== "free") return;
+  const { mode, accessTier, sandboxPreference } = args;
+  if (!isAgentMode(mode) || accessTier !== "free") return;
 
   const isLocalSandbox = sandboxPreference && sandboxPreference !== "e2b";
   if (!isLocalSandbox) {
     throw new ChatSDKError(
       "forbidden:chat",
-      "Agent mode on the free plan requires a local sandbox. Install the desktop app or upgrade to Pro for cloud access.",
+      "Agent mode without Pro feature access requires a local sandbox.",
     );
   }
 }
 
 /**
- * Paid plans are Agent-only. Enforce this at the API boundary so stale clients
- * and direct requests cannot restore the removed paid Ask path.
+ * Pro feature access is Agent-only. Enforce this at the API boundary so stale
+ * clients and direct requests cannot restore the Ask path.
  */
 export function assertChatModeAccess(args: {
   mode: unknown;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
 }): void {
   if (args.mode !== "ask" && args.mode !== "agent") {
     throw new ChatSDKError("bad_request:api", "Invalid chat mode.");
   }
 
-  if (args.mode !== "ask" || args.subscription === "free") return;
+  if (args.mode !== "ask" || args.accessTier === "free") return;
 
   throw new ChatSDKError(
     "forbidden:chat",
-    "Paid plans use Agent mode. Ask mode is only available on the free plan.",
+    "Pro access uses Agent mode. Ask mode is unavailable for this account.",
   );
 }
 

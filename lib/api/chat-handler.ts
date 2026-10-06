@@ -388,12 +388,12 @@ export const createChatHandler = () => {
       await assertUserCanMakeCostIncurringRequest(userId);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription: accessTier,
+        subscription,
         country: subscriptionFirstCountryFromRequest(req),
         surface: "ask",
       });
       usageRefundTracker.setUser(userId, subscription, organizationId);
-      assertChatModeAccess({ mode, subscription });
+      assertChatModeAccess({ mode, accessTier });
       if (subscription === "free") {
         const lock = await acquireFreeRunConcurrencyLock(
           freeUsageSubject,
@@ -414,7 +414,7 @@ export const createChatHandler = () => {
 
       assertFreeAgentGates({
         mode,
-        subscription: accessTier,
+        accessTier,
         sandboxPreference,
       });
 
@@ -958,6 +958,7 @@ export const createChatHandler = () => {
               {
                 cloudSandboxProvider: cloudSandboxSelection.provider,
                 cloudSandboxSelectionReason: cloudSandboxSelection.reason,
+                accessTier,
                 triggerRegion: executionRegion,
                 environment: process.env.VERCEL_ENV ?? "development",
               },

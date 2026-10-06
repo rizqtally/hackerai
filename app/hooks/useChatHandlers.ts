@@ -132,6 +132,7 @@ export const useChatHandlers = ({
     setTodos,
     isUploadingFiles,
     subscription,
+    accessTier,
     queueMessage,
     messageQueue,
     removeQueuedMessage,
@@ -147,7 +148,7 @@ export const useChatHandlers = ({
   } = useGlobalState();
   const requestSelectedModel = normalizeSelectedModelForSubscription(
     selectedModel,
-    subscription,
+    accessTier,
   );
   // MessageItem intentionally ignores callback identity in its memo comparator,
   // so a rendered Regenerate button can retain an older handler closure.
