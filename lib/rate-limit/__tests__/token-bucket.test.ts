@@ -585,18 +585,21 @@ describe("token-bucket", () => {
       );
     });
 
-    it.each(["model-glm-5.3", "z-ai/glm-5.3", "z-ai/glm-5.3-20260816"])(
-      "should use GLM 5.3 pricing for %s ($1.40/$4.40)",
-      (modelName) => {
-        expect(calculateTokenCost(1_000_000, "input", modelName)).toBe(16800);
-        expect(calculateTokenCost(1_000_000, "output", modelName)).toBe(52800);
-      },
-    );
+    it.each([
+      "model-glm-5.3",
+      "glm-5.3",
+      "z-ai/glm-5.3",
+      "z-ai/glm-5.3-20260816",
+    ])("should use GLM 5.3 pricing for %s ($1.40/$4.40)", (modelName) => {
+      expect(calculateTokenCost(1_000_000, "input", modelName)).toBe(16800);
+      expect(calculateTokenCost(1_000_000, "output", modelName)).toBe(52800);
+    });
 
     it.each([
       "model-glm-5.3-flash",
       "model-glm-5.3-flash-pro",
       "model-glm-5.3-flash-agent",
+      "glm-5.3-flash",
       "ask-model-free-glm",
       "z-ai/glm-5.3-flash",
     ])(

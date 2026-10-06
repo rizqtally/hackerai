@@ -1203,8 +1203,6 @@ const openrouter = createOpenRouter({
   headers: openrouterAttributionHeaders,
 });
 
-type OpenRouterInstance = typeof openrouter;
-
 export const KIMI_K3_SLUG = "moonshotai/kimi-k3";
 export const GLM_5_2_SLUG = "z-ai/glm-5.2";
 export const GLM_5_3_SLUG = "z-ai/glm-5.3";
@@ -1222,6 +1220,48 @@ export const DEEPSEEK_V4_PRO_SLUG = "deepseek/deepseek-v4-pro";
 export const DEEPSEEK_V4_PRO_0813_SLUG = "deepseek/deepseek-v4-pro-0813";
 export const DEEPSEEK_V4_FLASH_SLUG = "deepseek/deepseek-v4-flash-0731";
 export const DEEPSEEK_V4_FLASH_PREVIOUS_SLUG = "deepseek/deepseek-v4-flash";
+export const TOP_TOOLS_AI_BASE_URL = "https://top-tools-ai.com/v1";
+
+export type TopToolsAIModelId = "GLM-5.2" | "GLM-5.3" | "GLM-5.3-Flash";
+
+export const getTopToolsAIModelForProviderSlug = (
+  modelSlug: string,
+): TopToolsAIModelId => {
+  const normalized = modelSlug.toLowerCase();
+
+  if (normalized.includes("glm-5.2")) return "GLM-5.2";
+  if (
+    normalized.includes("glm-5.3-flash") ||
+    normalized.includes("flash") ||
+    normalized.includes("vision") ||
+    normalized.includes("minimax") ||
+    normalized.includes("moonshotai/kimi") ||
+    normalized.includes("grok-4.5") ||
+    normalized.includes("fallback-")
+  ) {
+    return "GLM-5.3-Flash";
+  }
+  return "GLM-5.3";
+};
+
+const topToolsApiKey = process.env.TOP_TOOLS_AI_API_KEY?.trim();
+const sharedTopToolsProvider = topToolsApiKey
+  ? createOpenAICompatible({
+      name: "top-tools-ai",
+      baseURL: TOP_TOOLS_AI_BASE_URL,
+      apiKey: topToolsApiKey,
+      includeUsage: true,
+      supportsStructuredOutputs: true,
+    })
+  : undefined;
+
+type ProviderModelFactory = (modelSlug: string) => any;
+const createActiveProviderModel: ProviderModelFactory = sharedTopToolsProvider
+  ? (modelSlug) =>
+      sharedTopToolsProvider.chatModel(
+        getTopToolsAIModelForProviderSlug(modelSlug),
+      )
+  : openrouter;
 
 export const getOpenRouterProviderRoutingForModel = (
   modelSlug: string,
@@ -1239,7 +1279,7 @@ export const getOpenRouterProviderRoutingForModel = (
 };
 
 const buildProviderMap = (
-  or: OpenRouterInstance,
+  or: ProviderModelFactory,
   // Preserve the DeepSeek alias used by paid daily free allowance rescue.
   // Regular free Ask uses ask-model-free-glm with low reasoning per request.
   freeAskModelSlug = DEEPSEEK_V4_FLASH_SLUG,
@@ -1282,7 +1322,7 @@ const buildProviderMap = (
   }) as Record<string, any>;
 
 const baseProviders: ReturnType<typeof buildProviderMap> = {
-  ...buildProviderMap(openrouter),
+  ...buildProviderMap(createActiveProviderModel),
   [ABLITERATION_MODEL_KEY]: abliteration(ABLITERATION_MODEL_ID),
   [ABLITERATION_LARGE_V2_MODEL_KEY]: abliteration(
     ABLITERATION_LARGE_V2_MODEL_ID,
@@ -1359,6 +1399,13 @@ export const modelDisplayNames: Record<ModelName, string> &
 };
 
 export const getModelDisplayName = (modelName: ModelName): string => {
+  if (sharedTopToolsProvider) {
+    const actualModelId = (baseProviders[modelName] as { modelId?: string })
+      .modelId;
+    if (actualModelId?.toLowerCase().startsWith("glm-")) {
+      return `Top Tools AI · GLM ${actualModelId.slice("glm-".length)}`;
+    }
+  }
   return modelDisplayNames[modelName];
 };
 
@@ -1487,11 +1534,11 @@ export const myProvider = customProvider({
 });
 
 export const createTrackedProvider = (zaiApiKey?: string) => {
-  if (!zaiApiKey) return myProvider;
+  if (sharedTopToolsProvider || !zaiApiKey) return myProvider;
 
   const zai = createOpenAICompatible({
     name: "zai",
-    baseURL: "https://top-tools-ai.com/v1",
+    baseURL: TOP_TOOLS_AI_BASE_URL,
     apiKey: zaiApiKey,
     includeUsage: true,
     supportsStructuredOutputs: true,
