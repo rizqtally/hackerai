@@ -106,14 +106,14 @@ describe("enrichOpenRouterStreamError", () => {
 
 describe("provider registry", () => {
   it.each([
-    ["z-ai/glm-5.2", "glm-5.2"],
-    ["z-ai/glm-5.3", "glm-5.3"],
-    ["z-ai/glm-5.3-flash", "glm-5.3-flash"],
-    ["deepseek/deepseek-v4-pro-0813", "glm-5.3"],
-    ["deepseek/deepseek-v4.1-flash", "glm-5.3-flash"],
-    ["x-ai/grok-4.5", "glm-5.3-flash"],
-    ["moonshotai/kimi-k3", "glm-5.3-flash"],
-    ["anthropic/claude-opus-4.6", "glm-5.3"],
+    ["z-ai/glm-5.2", "GLM-5.2"],
+    ["z-ai/glm-5.3", "GLM-5.3"],
+    ["z-ai/glm-5.3-flash", "GLM-5.3-Flash"],
+    ["deepseek/deepseek-v4-pro-0813", "GLM-5.3"],
+    ["deepseek/deepseek-v4.1-flash", "GLM-5.3-Flash"],
+    ["x-ai/grok-4.5", "GLM-5.3-Flash"],
+    ["moonshotai/kimi-k3", "GLM-5.3-Flash"],
+    ["anthropic/claude-opus-4.6", "GLM-5.3"],
   ] as const)("maps shared provider route %s to %s", (slug, modelId) => {
     expect(getTopToolsAIModelForProviderSlug(slug)).toBe(modelId);
   });
@@ -132,15 +132,15 @@ describe("provider registry", () => {
         const accountProvider = createProvider("account-specific-test-key");
 
         expect(sharedProvider.languageModel("model-glm-5.2").modelId).toBe(
-          "glm-5.2",
+          "GLM-5.2",
         );
         expect(
           accountProvider.languageModel("model-deepseek-v4-pro-0813").modelId,
-        ).toBe("glm-5.3");
+        ).toBe("GLM-5.3");
         expect(
           accountProvider.languageModel("model-deepseek-v4-flash-vision-pro")
             .modelId,
-        ).toBe("glm-5.3-flash");
+        ).toBe("GLM-5.3-Flash");
       });
     } finally {
       if (originalApiKey === undefined) {

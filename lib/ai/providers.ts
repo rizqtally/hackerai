@@ -1222,14 +1222,14 @@ export const DEEPSEEK_V4_FLASH_SLUG = "deepseek/deepseek-v4-flash-0731";
 export const DEEPSEEK_V4_FLASH_PREVIOUS_SLUG = "deepseek/deepseek-v4-flash";
 export const TOP_TOOLS_AI_BASE_URL = "https://top-tools-ai.com/v1";
 
-export type TopToolsAIModelId = "glm-5.2" | "glm-5.3" | "glm-5.3-flash";
+export type TopToolsAIModelId = "GLM-5.2" | "GLM-5.3" | "GLM-5.3-Flash";
 
 export const getTopToolsAIModelForProviderSlug = (
   modelSlug: string,
 ): TopToolsAIModelId => {
   const normalized = modelSlug.toLowerCase();
 
-  if (normalized.includes("glm-5.2")) return "glm-5.2";
+  if (normalized.includes("glm-5.2")) return "GLM-5.2";
   if (
     normalized.includes("glm-5.3-flash") ||
     normalized.includes("flash") ||
@@ -1239,9 +1239,9 @@ export const getTopToolsAIModelForProviderSlug = (
     normalized.includes("grok-4.5") ||
     normalized.includes("fallback-")
   ) {
-    return "glm-5.3-flash";
+    return "GLM-5.3-Flash";
   }
-  return "glm-5.3";
+  return "GLM-5.3";
 };
 
 const topToolsApiKey = process.env.TOP_TOOLS_AI_API_KEY?.trim();
@@ -1402,7 +1402,7 @@ export const getModelDisplayName = (modelName: ModelName): string => {
   if (sharedTopToolsProvider) {
     const actualModelId = (baseProviders[modelName] as { modelId?: string })
       .modelId;
-    if (actualModelId?.startsWith("glm-")) {
+    if (actualModelId?.toLowerCase().startsWith("glm-")) {
       return `Top Tools AI · GLM ${actualModelId.slice("glm-".length)}`;
     }
   }
