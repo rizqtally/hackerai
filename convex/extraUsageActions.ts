@@ -807,16 +807,15 @@ export const deductWithAutoReload = action({
     ),
   }),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { url: null, error: "Not authenticated" };
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      throw new Error("Invalid service key");
     }
 
     const activeSuspension = await ctx.runQuery(
       api.userSuspensions.getActiveByUser,
       {
-        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
-        userId: identity.subject,
+        serviceKey: args.serviceKey,
+        userId: args.userId,
       },
     );
     if (activeSuspension?.status === "active") {

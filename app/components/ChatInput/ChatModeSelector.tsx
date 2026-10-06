@@ -16,6 +16,7 @@ export function ChatModeSelector({ className }: ChatModeSelectorProps) {
   const {
     chatMode,
     setChatMode,
+    subscription,
     accessTier,
     hasLocalSandbox,
     desktopBridgeStatus,

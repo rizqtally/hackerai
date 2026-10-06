@@ -1,8 +1,19 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { ChatSDKError } from "@/lib/errors";
 
-jest.mock("@/app/api/stripe", () => ({ stripe: { checkout: { sessions: { create: jest.fn() } } } }));
+jest.mock("@/app/api/stripe", () => ({
+  stripe: { checkout: { sessions: { create: jest.fn() } } },
+}));
 jest.mock("@/app/api/workos", () => ({ workos: {} }));
+jest.mock("next/server", () => ({
+  NextResponse: {
+    json: (body: unknown, init?: { status?: number }) => ({
+      status: init?.status ?? 200,
+      json: async () => body,
+    }),
+  },
+  after: jest.fn(),
+}));
 
 const mockGetUserIDAndPro = jest.fn();
 jest.mock("@/lib/auth/get-user-id", () => ({

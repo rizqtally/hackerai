@@ -379,9 +379,9 @@ const AccountTab = () => {
                   ? "HackerAI Team"
                   : subscription === "pro-plus"
                     ? "HackerAI Pro+"
-                      : subscription === "pro"
-                        ? "HackerAI Pro"
-                        : "HackerAI Free"}
+                    : subscription === "pro"
+                      ? "HackerAI Pro"
+                      : "HackerAI Free"}
             </div>
             {renewalPrice && (
               <div className="mt-0.5 text-sm text-muted-foreground">
@@ -413,9 +413,6 @@ const AccountTab = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {!currentCancellationStatus?.statusUnavailable &&
-                    (subscription === "pro" || subscription === "pro-plus") && (
-                    )}
                   {cancellationScheduled ? (
                     <>
                       <DropdownMenuItem disabled>

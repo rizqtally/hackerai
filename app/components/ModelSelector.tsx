@@ -441,11 +441,13 @@ const ModelOptionList = ({
 export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [maxAccessDialogOpen, setMaxAccessDialogOpen] = useState(false);
-  const { accessTier } = useGlobalState();
+  const { subscription, accessTier } = useGlobalState();
   const isMobile = Boolean(useIsMobile());
 
   const isFreeUser = accessTier === "free";
+  const isFreeSubscription = subscription === "free";
   const shouldCheckPersonalMaxExtraUsage =
+    !isFreeSubscription &&
     (accessTier === "pro" || accessTier === "pro-plus") &&
     (open || value === "hackerai-max");
   const maxModelEntitlement = useQuery(
@@ -468,7 +470,9 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
         }) ?? "auto");
   const isAuto = displayValue === "auto";
 
-  const options = isAgentMode(mode) ? AGENT_MODEL_OPTIONS : ASK_MODEL_OPTIONS;
+  const options = (
+    isAgentMode(mode) ? AGENT_MODEL_OPTIONS : ASK_MODEL_OPTIONS
+  ).filter((option) => !isFreeSubscription || !isMaxModel(option.id));
 
   const effectiveValue = isAuto ? getDefaultModelForMode(mode) : displayValue;
   const selected =
@@ -506,10 +510,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
       )
     ) {
       setOpen(false);
-      if (
-        isMaxModel(option.id) &&
-        canChoosePersonalMaxAccessPath(accessTier)
-      ) {
+      if (isMaxModel(option.id) && canChoosePersonalMaxAccessPath(accessTier)) {
         setMaxAccessDialogOpen(true);
         return;
       }

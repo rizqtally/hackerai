@@ -33,6 +33,7 @@ Object.defineProperty(globalThis, "ResizeObserver", {
 jest.mock("@/app/contexts/GlobalState", () => ({
   useGlobalState: () => ({
     subscription: mockSubscription,
+    accessTier: mockSubscription === "free" ? "pro" : mockSubscription,
   }),
 }));
 
@@ -69,11 +70,11 @@ describe("ModelSelector", () => {
   it("skips the Max entitlement query until a paid user opens the selector", () => {
     render(<ModelSelector value="auto" onChange={jest.fn()} mode="agent" />);
 
-    expect(mockUseQuery).toHaveBeenLastCalledWith(expect.anything(), "skip");
+    expect(mockUseQuery.mock.calls.at(-1)?.[1]).toBe("skip");
 
     fireEvent.click(screen.getByRole("button", { name: /^Auto$/i }));
 
-    expect(mockUseQuery).toHaveBeenLastCalledWith(expect.anything(), {});
+    expect(mockUseQuery.mock.calls.at(-1)?.[1]).toEqual({});
   });
 
   it("shows model choices immediately while Auto is selected", () => {
@@ -347,14 +348,38 @@ describe("ModelSelector", () => {
     expect(mockRedirectToPricing).not.toHaveBeenCalled();
   });
 
-  it("does not display a stale paid model as selected for free users", () => {
+  it("preserves Pro model access for free users", () => {
+    mockSubscription = "free";
+    const onChange = jest.fn();
+
+    render(<ModelSelector value="auto" onChange={onChange} mode="ask" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Auto$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /HackerAI Pro/i }));
+
+    expect(onChange).toHaveBeenCalledWith("hackerai-pro");
+    expect(mockRedirectToPricing).not.toHaveBeenCalled();
+  });
+
+  it("preserves an existing Pro selection for free users", () => {
     mockSubscription = "free";
 
     render(
       <ModelSelector value="hackerai-pro" onChange={jest.fn()} mode="agent" />,
     );
 
-    expect(screen.getByRole("button", { name: /^Auto$/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /HackerAI Pro/i })).toBeVisible();
+  });
+
+  it("does not expose paid Max checkout actions to free users", () => {
+    mockSubscription = "free";
+
+    render(<ModelSelector value="auto" onChange={jest.fn()} mode="agent" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Auto$/i }));
+
+    expect(screen.queryByText("HackerAI Max")).not.toBeInTheDocument();
+    expect(mockUseQuery.mock.calls.at(-1)?.[1]).toBe("skip");
+    expect(mockOpenSettingsDialog).not.toHaveBeenCalled();
+    expect(mockRedirectToPricing).not.toHaveBeenCalled();
   });
 
   it("does not display stale Max as selected outside Ultra", () => {
