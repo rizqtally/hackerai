@@ -21,7 +21,7 @@ export const AttachmentButton = ({
   onAttachClick,
   disabled = false,
 }: AttachmentButtonProps) => {
-  const { subscription, isCheckingProPlan } = useGlobalState();
+  const { accessTier, subscription, isCheckingProPlan } = useGlobalState();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const capturedImpressionRef = useRef(false);
 
@@ -38,7 +38,7 @@ export const AttachmentButton = ({
   }, [popoverOpen, subscription]);
 
   const handleClick = () => {
-    if (subscription !== "free") {
+    if (accessTier !== "free") {
       onAttachClick();
     } else {
       setPopoverOpen(true);
@@ -58,7 +58,7 @@ export const AttachmentButton = ({
   };
 
   // If user has pro plan or we're checking, show normal tooltip behavior
-  if (subscription !== "free" || isCheckingProPlan) {
+  if (accessTier !== "free" || isCheckingProPlan) {
     return (
       <TooltipPrimitive.Root>
         <TooltipTrigger asChild>

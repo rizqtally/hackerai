@@ -683,6 +683,7 @@ export async function processChatMessages({
   mode,
   userId,
   subscription,
+  accessTier = subscription,
   uploadBasePath,
   modelOverride,
   extraUsageAvailable = false,
@@ -699,6 +700,7 @@ export async function processChatMessages({
   mode: ChatMode;
   userId: string;
   subscription: SubscriptionTier;
+  accessTier?: SubscriptionTier;
   uploadBasePath?: string;
   modelOverride?: SelectedModel;
   extraUsageAvailable?: boolean;
@@ -732,7 +734,7 @@ export async function processChatMessages({
       mode,
       userId,
       uploadBasePath,
-      subscription,
+      accessTier,
       allowLocalDesktopFiles,
       { chatId, triggerRunId, requestId },
     );
@@ -783,7 +785,7 @@ export async function processChatMessages({
   // Select the appropriate model early so we can make model-aware decisions below
   const selectedModel = selectModel(
     mode,
-    subscription,
+    accessTier,
     modelOverride,
     mediaAttachmentRouting.hasImage,
     mediaAttachmentRouting.hasPdf,

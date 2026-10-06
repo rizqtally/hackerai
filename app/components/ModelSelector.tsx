@@ -71,26 +71,26 @@ const AUTO_MODEL_DESCRIPTION =
 
 const isMaxModel = (model: SelectedModel): boolean => model === "hackerai-max";
 
-const canUnlockMaxWithExtraUsage = (subscription: SubscriptionTier): boolean =>
-  subscription !== "free" && subscription !== "ultra";
+const canUnlockMaxWithExtraUsage = (accessTier: SubscriptionTier): boolean =>
+  accessTier !== "free" && accessTier !== "ultra";
 
 const canChoosePersonalMaxAccessPath = (
-  subscription: SubscriptionTier,
-): boolean => subscription === "pro" || subscription === "pro-plus";
+  accessTier: SubscriptionTier,
+): boolean => accessTier === "pro" || accessTier === "pro-plus";
 
 const isModelLockedForSubscription = (
-  subscription: SubscriptionTier,
+  accessTier: SubscriptionTier,
   model: SelectedModel,
   extraUsageAvailable = false,
 ): boolean =>
-  subscription === "free" ||
-  (isMaxModel(model) && !canUseMaxModel(subscription, { extraUsageAvailable }));
+  accessTier === "free" ||
+  (isMaxModel(model) && !canUseMaxModel(accessTier, { extraUsageAvailable }));
 
 const getLockedModelCta = (
   model: SelectedModel,
-  subscription: SubscriptionTier,
+  accessTier: SubscriptionTier,
 ): string => {
-  if (isMaxModel(model) && canUnlockMaxWithExtraUsage(subscription)) {
+  if (isMaxModel(model) && canUnlockMaxWithExtraUsage(accessTier)) {
     return "Set up Extra Usage";
   }
   return isMaxModel(model) ? "Upgrade to Ultra" : "Upgrade your plan";
@@ -98,28 +98,28 @@ const getLockedModelCta = (
 
 const getLockedModelAnnouncement = (
   model: SelectedModel,
-  subscription: SubscriptionTier,
+  accessTier: SubscriptionTier,
 ): string => {
-  if (isMaxModel(model) && canChoosePersonalMaxAccessPath(subscription)) {
+  if (isMaxModel(model) && canChoosePersonalMaxAccessPath(accessTier)) {
     return "Use Extra Usage or upgrade to Ultra for Max mode";
   }
 
-  return `${getLockedModelCta(model, subscription)}${
+  return `${getLockedModelCta(model, accessTier)}${
     isMaxModel(model) ? " for Max mode" : " to unlock"
   }`;
 };
 
 const openMaxUltraUpgrade = ({
   mobile,
-  subscription,
+  accessTier,
 }: {
   mobile: boolean;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
 }) => {
   redirectToPricing({
     surface: mobile ? "model_selector_mobile" : "model_selector",
     source: "max_model_gate",
-    from_tier: subscription,
+    from_tier: accessTier,
     cta_text: "Upgrade to Ultra",
   });
 };
@@ -127,14 +127,14 @@ const openMaxUltraUpgrade = ({
 const handleLockedModelCta = ({
   mobile,
   option,
-  subscription,
+  accessTier,
 }: {
   mobile: boolean;
   option: ModelOption;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
 }) => {
   const maxLocked = isMaxModel(option.id);
-  if (maxLocked && canUnlockMaxWithExtraUsage(subscription)) {
+  if (maxLocked && canUnlockMaxWithExtraUsage(accessTier)) {
     openSettingsDialog("Extra Usage");
     return;
   }
@@ -142,8 +142,8 @@ const handleLockedModelCta = ({
   redirectToPricing({
     surface: mobile ? "model_selector_mobile" : "model_selector",
     source: maxLocked ? "max_model_gate" : "locked_model_option",
-    from_tier: subscription,
-    cta_text: getLockedModelCta(option.id, subscription),
+    from_tier: accessTier,
+    cta_text: getLockedModelCta(option.id, accessTier),
   });
 };
 
@@ -187,7 +187,7 @@ const ModelOptionButton = ({
   isSelected,
   isLocked,
   isPending,
-  subscription,
+  accessTier,
   onSelect,
   mobile = false,
 }: {
@@ -195,7 +195,7 @@ const ModelOptionButton = ({
   isSelected: boolean;
   isLocked: boolean;
   isPending: boolean;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
   onSelect: (option: ModelOption) => void;
   mobile?: boolean;
 }) => {
@@ -212,7 +212,7 @@ const ModelOptionButton = ({
           : isLocked
             ? `${option.label}. ${getLockedModelAnnouncement(
                 option.id,
-                subscription,
+                accessTier,
               )}.`
             : undefined
       }
@@ -286,7 +286,7 @@ const ModelOptionList = ({
   value,
   isAuto,
   isFreeUser,
-  subscription,
+  accessTier,
   maxModelExtraUsageAvailable,
   maxModelEntitlementLoading,
   onAutoSelect,
@@ -298,7 +298,7 @@ const ModelOptionList = ({
   value: SelectedModel;
   isAuto: boolean;
   isFreeUser: boolean;
-  subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
   maxModelExtraUsageAvailable: boolean;
   maxModelEntitlementLoading: boolean;
   onAutoSelect: () => void;
@@ -344,7 +344,7 @@ const ModelOptionList = ({
     {options.map((option) => {
       const isSelected = value === option.id;
       const isLocked = isModelLockedForSubscription(
-        subscription,
+        accessTier,
         option.id,
         maxModelExtraUsageAvailable,
       );
@@ -362,7 +362,7 @@ const ModelOptionList = ({
               isSelected={isSelected}
               isLocked={isLocked}
               isPending={isPending}
-              subscription={subscription}
+              accessTier={accessTier}
               onSelect={onSelect}
               mobile={mobile}
             />
@@ -379,7 +379,7 @@ const ModelOptionList = ({
                 isSelected={isSelected}
                 isLocked={isLocked}
                 isPending={false}
-                subscription={subscription}
+                accessTier={accessTier}
                 onSelect={onSelect}
                 mobile={mobile}
               />
@@ -409,7 +409,7 @@ const ModelOptionList = ({
               <a
                 href={
                   isMaxModel(option.id) &&
-                  canUnlockMaxWithExtraUsage(subscription)
+                  canUnlockMaxWithExtraUsage(accessTier)
                     ? "#extra-usage"
                     : "#pricing"
                 }
@@ -419,13 +419,13 @@ const ModelOptionList = ({
                   handleLockedModelCta({
                     mobile,
                     option,
-                    subscription,
+                    accessTier,
                   });
                 }}
                 className="text-foreground underline underline-offset-2 hover:text-foreground/80"
                 tabIndex={0}
               >
-                {getLockedModelCta(option.id, subscription)}
+                {getLockedModelCta(option.id, accessTier)}
               </a>
               {isMaxModel(option.id) ? " for Max mode." : " to unlock."}
             </p>
@@ -441,12 +441,12 @@ const ModelOptionList = ({
 export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [maxAccessDialogOpen, setMaxAccessDialogOpen] = useState(false);
-  const { subscription } = useGlobalState();
+  const { accessTier } = useGlobalState();
   const isMobile = Boolean(useIsMobile());
 
-  const isFreeUser = subscription === "free";
+  const isFreeUser = accessTier === "free";
   const shouldCheckPersonalMaxExtraUsage =
-    (subscription === "pro" || subscription === "pro-plus") &&
+    (accessTier === "pro" || accessTier === "pro-plus") &&
     (open || value === "hackerai-max");
   const maxModelEntitlement = useQuery(
     api.extraUsage.getMaxModelExtraUsageEntitlement,
@@ -456,14 +456,14 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
     shouldCheckPersonalMaxExtraUsage && maxModelEntitlement === undefined;
   const maxModelExtraUsageAvailable =
     maxModelEntitlement?.extraUsageAvailable ?? false;
-  const subscriptionValue = normalizeSelectedModelForSubscription(
+  const accessTierValue = normalizeSelectedModelForSubscription(
     value,
-    subscription,
+    accessTier,
   );
   const displayValue =
     value === "hackerai-max" && maxModelEntitlementLoading
-      ? subscriptionValue
-      : (normalizeMaxModelForSubscription(subscriptionValue, subscription, {
+      ? accessTierValue
+      : (normalizeMaxModelForSubscription(accessTierValue, accessTier, {
           extraUsageAvailable: maxModelExtraUsageAvailable,
         }) ?? "auto");
   const isAuto = displayValue === "auto";
@@ -500,7 +500,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
 
     if (
       isModelLockedForSubscription(
-        subscription,
+        accessTier,
         option.id,
         maxModelExtraUsageAvailable,
       )
@@ -508,7 +508,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
       setOpen(false);
       if (
         isMaxModel(option.id) &&
-        canChoosePersonalMaxAccessPath(subscription)
+        canChoosePersonalMaxAccessPath(accessTier)
       ) {
         setMaxAccessDialogOpen(true);
         return;
@@ -517,7 +517,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
       handleLockedModelCta({
         mobile: isMobile,
         option,
-        subscription,
+        accessTier,
       });
       return;
     }
@@ -566,7 +566,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
               setMaxAccessDialogOpen(false);
               openMaxUltraUpgrade({
                 mobile: isMobile,
-                subscription,
+                accessTier,
               });
             }}
           >
@@ -597,7 +597,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
               value={displayValue}
               isAuto={isAuto}
               isFreeUser={isFreeUser}
-              subscription={subscription}
+              accessTier={accessTier}
               maxModelExtraUsageAvailable={maxModelExtraUsageAvailable}
               maxModelEntitlementLoading={maxModelEntitlementLoading}
               onAutoSelect={handleAutoSelect}
@@ -622,7 +622,7 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
             value={displayValue}
             isAuto={isAuto}
             isFreeUser={isFreeUser}
-            subscription={subscription}
+            accessTier={accessTier}
             maxModelExtraUsageAvailable={maxModelExtraUsageAvailable}
             maxModelEntitlementLoading={maxModelEntitlementLoading}
             onAutoSelect={handleAutoSelect}

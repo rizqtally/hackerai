@@ -16,7 +16,7 @@ export function ChatModeSelector({ className }: ChatModeSelectorProps) {
   const {
     chatMode,
     setChatMode,
-    subscription,
+    accessTier,
     hasLocalSandbox,
     desktopBridgeStatus,
     retryDesktopBridge,
@@ -49,7 +49,7 @@ export function ChatModeSelector({ className }: ChatModeSelectorProps) {
       navigateToAuth("/signup", { preferSignInForReturningUser: true });
       return;
     }
-    if (subscription !== "free") {
+    if (accessTier !== "free") {
       setChatMode("agent");
     } else if (hasLocalSandbox) {
       enableLocalAgentMode();

@@ -109,6 +109,7 @@ import {
   UsageRefundTracker,
 } from "@/lib/rate-limit";
 import { assertUserCanMakeCostIncurringRequest } from "@/lib/suspensions";
+import { resolveProductAccessTier } from "@/lib/auth/entitlements";
 import {
   saveMessage,
   updateChat,
@@ -1625,6 +1626,7 @@ export const agentLongTask = task({
       analyticsRequestContext,
       genericDelegationEnabled = false,
     } = payload;
+    const accessTier = resolveProductAccessTier(subscription);
     const subagentsEnabled = genericDelegationEnabled;
     let selectedModelOverride = rawSelectedModelOverride;
     const endpoint = payloadEndpoint ?? LEGACY_AGENT_API_ENDPOINT;
@@ -1917,7 +1919,7 @@ export const agentLongTask = task({
       ]);
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
       selectedModelOverride =
-        normalizeMaxModelForSubscription(selectedModelOverride, subscription, {
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
           extraUsageAvailable,
         }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
@@ -1926,7 +1928,7 @@ export const agentLongTask = task({
         subscription,
       );
       const directGlmVisionEnabled = isEligibleForDirectGlmVision({
-        subscription,
+        subscription: accessTier,
         selectedModelOverride,
       });
       const posthog = PostHogClient();
@@ -1988,6 +1990,7 @@ export const agentLongTask = task({
         mode,
         userId,
         subscription,
+        accessTier,
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
@@ -2503,7 +2506,7 @@ export const agentLongTask = task({
               });
               const currentlyAllowedModel = normalizeMaxModelForSubscription(
                 selectedModelOverride,
-                authorization.subscription,
+                resolveProductAccessTier(authorization.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
               );
               if (currentlyAllowedModel !== selectedModelOverride) {
@@ -2592,7 +2595,7 @@ export const agentLongTask = task({
               });
               const currentlyAllowedModel = normalizeMaxModelForSubscription(
                 selectedModelOverride,
-                currentEntitlement.subscription,
+                resolveProductAccessTier(currentEntitlement.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
               );
               if (currentlyAllowedModel !== selectedModelOverride) {

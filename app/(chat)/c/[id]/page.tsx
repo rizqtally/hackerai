@@ -3,8 +3,6 @@
 import { Chat } from "../../../components/chat";
 import { useConvexAuth } from "convex/react";
 import Loading from "@/components/ui/loading";
-import PricingDialog from "../../../components/PricingDialog";
-import { usePricingDialog } from "../../../hooks/usePricingDialog";
 import { useGlobalState } from "../../../contexts/GlobalState";
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -14,9 +12,6 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const chatId = params.id;
   const router = useRouter();
-  const { subscription } = useGlobalState();
-  const { showPricing, handleClosePricing, pricingContext } =
-    usePricingDialog(subscription);
   const { isLoading, isAuthenticated } = useConvexAuth();
   const hasAuthHint = useHasAuthenticatedBefore();
 
@@ -40,11 +35,6 @@ export default function Page(props: { params: Promise<{ id: string }> }) {
         </div>
       )}
 
-      <PricingDialog
-        isOpen={showPricing}
-        onClose={handleClosePricing}
-        context={pricingContext}
-      />
     </>
   );
 }

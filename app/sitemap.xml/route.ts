@@ -3,7 +3,6 @@ import { PUBLIC_PAGE_LAST_MODIFIED, SITE_URL } from "@/lib/seo/site";
 const PUBLIC_URLS = [
   { path: "/", lastModified: PUBLIC_PAGE_LAST_MODIFIED.home },
   { path: "/product", lastModified: PUBLIC_PAGE_LAST_MODIFIED.product },
-  { path: "/pricing", lastModified: PUBLIC_PAGE_LAST_MODIFIED.pricing },
   { path: "/download", lastModified: PUBLIC_PAGE_LAST_MODIFIED.download },
   { path: "/trust", lastModified: PUBLIC_PAGE_LAST_MODIFIED.trust },
   {

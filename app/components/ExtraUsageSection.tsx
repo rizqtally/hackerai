@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -8,25 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   TurnOffExtraUsageDialog,
-  BuyExtraUsageDialog,
   AdjustSpendingLimitDialog,
   AutoReloadDialog,
   AutoReloadDisabledAlert,
 } from "@/app/components/extra-usage";
-import {
-  getApproximateWeeklyExtraUsageSpend,
-  getRecommendedExtraUsagePurchaseAmount,
-} from "@/app/components/extra-usage/BuyExtraUsageDialog";
-import {
-  captureAddCreditCtaClick,
-  captureAddCreditCtaImpression,
-  captureAuthenticatedEvent,
-  newCheckoutAttemptId,
-} from "@/lib/analytics/client";
-import {
-  PAID_FUNNEL_EVENTS,
-  paidFunnelProperties,
-} from "@/lib/analytics/paid-funnel";
 
 const ExtraUsageSection = () => {
   // User customization for extra usage enabled flag
@@ -43,23 +28,13 @@ const ExtraUsageSection = () => {
     api.extraUsage.updateExtraUsageSettings,
   );
 
-  // Convex actions for Stripe operations
   const getPaymentStatus = useAction(api.extraUsageActions.getPaymentStatus);
-  const createPurchaseSession = useAction(
-    api.extraUsageActions.createPurchaseSession,
-  );
 
-  // Loading states
   const [isTogglingExtraUsage, setIsTogglingExtraUsage] = useState(false);
-  const [isPurchasing, setIsPurchasing] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-
-  // Dialog states
   const [showTurnOffDialog, setShowTurnOffDialog] = useState(false);
-  const [showBuyDialog, setShowBuyDialog] = useState(false);
   const [showSpendingLimitDialog, setShowSpendingLimitDialog] = useState(false);
   const [showAutoReloadDialog, setShowAutoReloadDialog] = useState(false);
-  const capturedBuyCtaImpressionRef = useRef(false);
 
   // Extra usage toggle handler
   const handleToggleExtraUsage = async (enabled: boolean) => {
@@ -106,47 +81,6 @@ const ExtraUsageSection = () => {
       toast.error("Failed to disable extra usage");
     } finally {
       setIsTogglingExtraUsage(false);
-    }
-  };
-
-  // Purchase credits (redirects to Stripe Checkout with saved cards shown)
-  const handlePurchaseCredits = async (amountDollars: number) => {
-    setIsPurchasing(true);
-    try {
-      const checkoutAttemptId = newCheckoutAttemptId();
-      const result = await createPurchaseSession({
-        amountDollars,
-        baseUrl: window.location.origin,
-        checkoutAttemptId,
-        // Return to the stopped chat so its live balance can offer Continue.
-        // The pathname avoids forwarding transient checkout or pricing flags.
-        returnPath:
-          window.location.pathname.length <= 400
-            ? window.location.pathname
-            : "/",
-      });
-
-      if (result.url) {
-        captureAuthenticatedEvent(
-          PAID_FUNNEL_EVENTS.addCreditCheckoutStarted,
-          paidFunnelProperties({
-            checkout_attempt_id: checkoutAttemptId,
-            checkout_type: "extra_usage_purchase",
-            surface: "extra_usage_settings",
-            source: "buy_extra_usage_dialog",
-            amount_dollars: amountDollars,
-            stripe_checkout_session_id: result.checkoutSessionId,
-          }),
-        );
-        window.location.href = result.url;
-      } else {
-        toast.error(result.error || "Failed to create checkout session");
-      }
-    } catch (error) {
-      console.error("Failed to purchase credits:", error);
-      toast.error("Failed to purchase credits");
-    } finally {
-      setIsPurchasing(false);
     }
   };
 
@@ -213,29 +147,7 @@ const ExtraUsageSection = () => {
   const autoReloadDisabledReason = extraUsageSettings?.autoReloadDisabledReason;
   const monthlyCapDollars = extraUsageSettings?.monthlyCapDollars;
   const monthlySpentDollars = extraUsageSettings?.monthlySpentDollars ?? 0;
-  const recommendedPurchaseAmountDollars =
-    getRecommendedExtraUsagePurchaseAmount(
-      getApproximateWeeklyExtraUsageSpend(
-        extraUsageSettings?.monthlySpentDollars,
-      ),
-    );
   const effectiveCapDollars = monthlyCapDollars;
-
-  useEffect(() => {
-    if (
-      !userCustomization?.extra_usage_enabled ||
-      capturedBuyCtaImpressionRef.current
-    ) {
-      return;
-    }
-
-    capturedBuyCtaImpressionRef.current = true;
-    captureAddCreditCtaImpression({
-      surface: "extra_usage_settings",
-      source: "current_balance_row",
-      cta_text: "Buy extra usage",
-    });
-  }, [userCustomization?.extra_usage_enabled]);
 
   // Get color class based on usage percentage (matches UsageTab)
   const getUsageColorClass = (percentage: number): string => {
@@ -374,24 +286,9 @@ const ExtraUsageSection = () => {
                   <AutoReloadDisabledAlert reason={autoReloadDisabledReason} />
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  captureAddCreditCtaClick({
-                    surface: "extra_usage_settings",
-                    source: "current_balance_row",
-                    cta_text: "Buy extra usage",
-                  });
-                  setShowBuyDialog(true);
-                }}
-                disabled={isPurchasing}
-                className="min-w-[5rem]"
-                aria-label="Buy extra usage"
-                tabIndex={0}
-              >
-                Buy extra usage
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Extra usage purchases are currently unavailable.
+              </p>
             </div>
           </>
         )}
@@ -403,14 +300,6 @@ const ExtraUsageSection = () => {
         onOpenChange={setShowTurnOffDialog}
         onConfirm={handleConfirmTurnOff}
         isLoading={isTogglingExtraUsage}
-      />
-
-      <BuyExtraUsageDialog
-        open={showBuyDialog}
-        onOpenChange={setShowBuyDialog}
-        onPurchase={handlePurchaseCredits}
-        isLoading={isPurchasing}
-        recommendedAmountDollars={recommendedPurchaseAmountDollars}
       />
 
       <AdjustSpendingLimitDialog

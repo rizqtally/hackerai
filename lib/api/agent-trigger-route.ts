@@ -459,19 +459,24 @@ export const createAgentTriggerPost =
         projectId: requestedProjectId,
       } = parsedBody.body;
 
-      const { userId, subscription, organizationId, freeQuotaSubject } =
-        await getUserIDAndPro(req);
+      const {
+        userId,
+        subscription,
+        accessTier,
+        organizationId,
+        freeQuotaSubject,
+      } = await getUserIDAndPro(req);
       let selectedModelOverride: SelectedModel | undefined =
         normalizeSelectedModelOverrideForSubscription(
           coerceSelectedModel(rawSelectedModel ?? null),
-          subscription,
+          accessTier,
         );
       await assertUserCanMakeCostIncurringRequest(userId);
       const regionalSubscriptionCountry =
         subscriptionFirstCountryFromRequest(req);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: regionalSubscriptionCountry,
         surface: "agent",
       });
@@ -482,7 +487,7 @@ export const createAgentTriggerPost =
 
       assertFreeAgentGates({
         mode: "agent",
-        subscription,
+        subscription: accessTier,
         sandboxPreference,
       });
 

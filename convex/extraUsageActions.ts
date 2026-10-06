@@ -8,6 +8,10 @@ import { WorkOS } from "@workos-inc/node";
 import { convexLogger } from "./lib/logger";
 import { extraUsageDollarsToPoints } from "./lib/extraUsagePricing";
 import { BILLING_ERRORS } from "../lib/billing/billing-errors";
+import {
+  BILLING_CHECKOUTS_DISABLED_MESSAGE,
+  BILLING_CHECKOUTS_ENABLED,
+} from "../lib/billing/availability";
 
 // =============================================================================
 // SDK Initialization (lazy, cached)
@@ -545,6 +549,10 @@ export const createPurchaseSession = action({
     checkoutSessionId: v.optional(v.string()),
   }),
   handler: async (ctx, args) => {
+    if (!BILLING_CHECKOUTS_ENABLED) {
+      return { url: null, error: BILLING_CHECKOUTS_DISABLED_MESSAGE };
+    }
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       return { url: null, error: "Not authenticated" };
@@ -799,16 +807,16 @@ export const deductWithAutoReload = action({
     ),
   }),
   handler: async (ctx, args) => {
-    // Validate service key
-    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
-      throw new Error("Invalid service key");
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { url: null, error: "Not authenticated" };
     }
 
     const activeSuspension = await ctx.runQuery(
       api.userSuspensions.getActiveByUser,
       {
-        serviceKey: args.serviceKey,
-        userId: args.userId,
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId: identity.subject,
       },
     );
     if (activeSuspension?.status === "active") {

@@ -287,8 +287,9 @@ const ChatInputContent = ({
     setSandboxPreference,
     selectedModel,
     setSelectedModel,
-    subscription,
-    isCheckingProPlan,
+  subscription,
+  accessTier,
+  isCheckingProPlan,
     hasLocalSandbox,
     localConnections,
     freeDesktopAgentOnlyActive,
@@ -670,7 +671,7 @@ const ChatInputContent = ({
   const isFreeAgent =
     !!user &&
     !isCheckingProPlan &&
-    subscription === "free" &&
+    accessTier === "free" &&
     isAgentMode(chatMode) &&
     (!isTauriEnvironment() || freeDesktopAgentOnlyActive);
   const freeAgentSandboxAvailable = freeDesktopAgentOnlyActive

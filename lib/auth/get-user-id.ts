@@ -4,6 +4,7 @@ import type { SubscriptionTier } from "@/types";
 import { createFreeQuotaSubject } from "@/lib/auth/free-quota-subject";
 import {
   parseEntitlements,
+  resolveProductAccessTier,
   resolveSubscriptionTier,
 } from "@/lib/auth/entitlements";
 import { isEndedSessionRefreshError } from "@/lib/auth/expected-auth-errors";
@@ -60,6 +61,7 @@ export const getUserIDAndPro = async (
 ): Promise<{
   userId: string;
   subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
   emailVerified: boolean;
   organizationId?: string;
   freeQuotaSubject?: string;
@@ -78,6 +80,7 @@ export const getUserIDAndPro = async (
     return {
       userId: session.user.id,
       subscription,
+      accessTier: resolveProductAccessTier(subscription),
       emailVerified: session.user.emailVerified === true,
       organizationId: (session as any).organizationId as string | undefined,
       freeQuotaSubject: createFreeQuotaSubject(getSessionUserEmail(session)),

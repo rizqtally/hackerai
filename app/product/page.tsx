@@ -129,12 +129,12 @@ export default function ProductPage() {
                     <ArrowRight className="size-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="ghost">
-                  <Link href="/pricing">
-                    View pricing
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
+  <Button asChild size="lg" variant="ghost">
+    <Link href="/signup">
+      Start free
+      <ArrowRight className="size-4" />
+    </Link>
+  </Button>
               </div>
             </div>
             <ZoomableImage
@@ -301,12 +301,12 @@ export default function ProductPage() {
                     <ArrowRight className="size-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="ghost">
-                  <Link href="/pricing">
-                    View pricing
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
+  <Button asChild size="lg" variant="ghost">
+    <Link href="/signup">
+      Start free
+      <ArrowRight className="size-4" />
+    </Link>
+  </Button>
               </div>
             </div>
             <div className="mt-14 flex flex-col items-center gap-4 border-t border-border pt-8 text-sm text-muted-foreground sm:flex-row sm:justify-between">

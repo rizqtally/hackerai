@@ -367,19 +367,24 @@ export const createChatHandler = () => {
       });
       const requestMessages = requireChatMessagesArray(messages);
 
-      const { userId, subscription, organizationId, freeQuotaSubject } =
-        await getUserIDAndPro(req);
+      const {
+        userId,
+        subscription,
+        accessTier,
+        organizationId,
+        freeQuotaSubject,
+      } = await getUserIDAndPro(req);
       paidDailyFreeAllowanceUserId = userId;
       const freeUsageSubject = freeQuotaSubject ?? userId;
       let selectedModelOverride: SelectedModel | undefined =
         normalizeSelectedModelOverrideForSubscription(
           coerceSelectedModel(rawSelectedModel ?? null),
-          subscription,
+          accessTier,
         );
       await assertUserCanMakeCostIncurringRequest(userId);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: subscriptionFirstCountryFromRequest(req),
         surface: "ask",
       });
@@ -405,7 +410,7 @@ export const createChatHandler = () => {
 
       assertFreeAgentGates({
         mode,
-        subscription,
+        subscription: accessTier,
         sandboxPreference,
       });
 
@@ -431,7 +436,7 @@ export const createChatHandler = () => {
         getMessagesByChatId({
           chatId,
           userId,
-          subscription,
+          subscription: accessTier,
           newMessages: requestMessages,
           regenerate,
           mode,
@@ -445,7 +450,7 @@ export const createChatHandler = () => {
       // round-trip at the end. getNotes never rejects (it returns [] on error).
       const shouldIncludeNotes = userCustomization?.include_notes ?? true;
       const preloadedNotes = shouldIncludeNotes
-        ? getNotes({ userId, subscription })
+        ? getNotes({ userId, subscription: accessTier })
         : undefined;
 
       const [projectContext, baseExtraUsageConfig] = await Promise.all([
@@ -464,7 +469,7 @@ export const createChatHandler = () => {
         }),
       ]);
       const truncatedMessages =
-        subscription === "free"
+        accessTier === "free"
           ? stripImageAttachments(fetched.truncatedMessages)
           : fetched.truncatedMessages;
 
@@ -474,7 +479,7 @@ export const createChatHandler = () => {
       );
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
       selectedModelOverride =
-        normalizeMaxModelForSubscription(selectedModelOverride, subscription, {
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
           extraUsageAvailable,
         }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
@@ -486,7 +491,7 @@ export const createChatHandler = () => {
       const directGlmVisionEnabled =
         (isAgentMode(mode) || attachmentCounts.imageCount > 0) &&
         isEligibleForDirectGlmVision({
-          subscription,
+          subscription: accessTier,
           selectedModelOverride,
         });
       await handleInitialChatAndUserMessage({
@@ -544,6 +549,7 @@ export const createChatHandler = () => {
         mode,
         userId,
         subscription,
+        accessTier,
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
@@ -632,12 +638,12 @@ export const createChatHandler = () => {
       if (flashRoutingAssignment)
         selectedModel = flashRoutingAssignment.modelKey;
       const notesEnabled =
-        (subscription !== "free" || isAgentMode(mode)) &&
+        (accessTier !== "free" || isAgentMode(mode)) &&
         (userCustomization?.include_notes ?? true);
 
       const estimatedInputTokens = await estimatePreflightInputTokens({
         mode,
-        subscription,
+        subscription: accessTier,
         userId,
         selectedModel,
         userCustomization,
@@ -1115,7 +1121,7 @@ export const createChatHandler = () => {
             const contextUsageOn = isContextUsageEnabled(subscription, mode);
             const ctxSystemTokens = contextUsageOn ? systemPromptTokens : 0;
             const ctxMaxTokens = contextUsageOn
-              ? getMaxTokensForSubscription(subscription, { mode })
+              ? getMaxTokensForSubscription(accessTier, { mode })
               : 0;
             // finalMessages will be set in prepareStep if summarization is needed
             let finalMessages = processedMessages;
