@@ -37,6 +37,13 @@ describe("Header", () => {
     const navigation = within(dialog).getByRole("navigation", {
       name: "Mobile",
     });
+    expect(screen.getByTestId("sign-in-button-mobile")).toHaveClass(
+      "max-[360px]:hidden",
+    );
+    const compactSignIn = within(dialog).getByTestId("sign-in-menu-mobile");
+    expect(compactSignIn).toHaveClass("min-[361px]:hidden");
+    await user.click(compactSignIn);
+    expect(mockNavigateToAuth).toHaveBeenCalledWith("/login");
 
     for (const [name, href] of [
       ["Product", "/product"],

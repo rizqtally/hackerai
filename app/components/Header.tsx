@@ -194,7 +194,7 @@ const Header: React.FC<HeaderProps> = ({ chatTitle, currentPath }) => {
               onClick={() => navigateToAuth("/login")}
               variant="default"
               size="sm"
-              className="rounded-[10px]"
+              className="rounded-[10px] max-[360px]:hidden"
             >
               Sign in
             </Button>
@@ -269,6 +269,16 @@ const Header: React.FC<HeaderProps> = ({ chatTitle, currentPath }) => {
                 );
               })}
             </ul>
+            {!loading && !user && (
+              <Button
+                data-testid="sign-in-menu-mobile"
+                onClick={() => navigateToAuth("/login")}
+                variant="default"
+                className="mt-4 w-full min-[361px]:hidden"
+              >
+                Sign in
+              </Button>
+            )}
           </nav>
         </div>
       )}
