@@ -45,7 +45,11 @@ import { createTools } from "@/lib/ai/tools";
 import { selectCloudSandboxProvider } from "@/lib/ai/tools/utils/cloud-sandbox-provider";
 import { ptySessionManager } from "@/lib/ai/tools/utils/pty-session-manager";
 import { generateTitleFromUserMessageWithWriter } from "@/lib/actions";
-import { createTrackedProvider } from "@/lib/ai/providers";
+import {
+  createTrackedProvider,
+  isZaiProviderModelKey,
+} from "@/lib/ai/providers";
+import { getZaiApiKeyForUser } from "@/lib/ai/zai-credentials";
 import { AGENT_PROVIDER_IDLE_TIMEOUT_MS } from "@/lib/ai/provider-stream-timeout";
 import { processChatMessages, selectModel } from "@/lib/chat/chat-processor";
 import { cacheAuxiliaryVisionDescription } from "@/lib/utils/file-transform-utils";
@@ -109,6 +113,7 @@ import {
   UsageRefundTracker,
 } from "@/lib/rate-limit";
 import { assertUserCanMakeCostIncurringRequest } from "@/lib/suspensions";
+import { resolveProductAccessTier } from "@/lib/auth/entitlements";
 import {
   saveMessage,
   updateChat,
@@ -1625,6 +1630,7 @@ export const agentLongTask = task({
       analyticsRequestContext,
       genericDelegationEnabled = false,
     } = payload;
+    const accessTier = resolveProductAccessTier(subscription);
     const subagentsEnabled = genericDelegationEnabled;
     let selectedModelOverride = rawSelectedModelOverride;
     const endpoint = payloadEndpoint ?? LEGACY_AGENT_API_ENDPOINT;
@@ -1917,7 +1923,7 @@ export const agentLongTask = task({
       ]);
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
       selectedModelOverride =
-        normalizeMaxModelForSubscription(selectedModelOverride, subscription, {
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
           extraUsageAvailable,
         }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
@@ -1926,9 +1932,10 @@ export const agentLongTask = task({
         subscription,
       );
       const directGlmVisionEnabled = isEligibleForDirectGlmVision({
-        subscription,
+        subscription: accessTier,
         selectedModelOverride,
       });
+      const userZaiApiKey = await getZaiApiKeyForUser(userId);
       const posthog = PostHogClient();
       const cloudSandboxSelection =
         !sandboxPreference || sandboxPreference === "e2b"
@@ -1964,7 +1971,9 @@ export const agentLongTask = task({
           freeQuotaSubject,
           freeLimits,
         );
-        await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
+        if (!userZaiApiKey) {
+          await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
+        }
       }
 
       const baseTodos: Todo[] = getBaseTodosForRequest(
@@ -1988,6 +1997,7 @@ export const agentLongTask = task({
         mode,
         userId,
         subscription,
+        accessTier,
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
@@ -2254,7 +2264,7 @@ export const agentLongTask = task({
             }
 
             const freeMonthlyBudgetSnapshot =
-              subscription === "free"
+              subscription === "free" && !userZaiApiKey
                 ? await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits)
                 : null;
 
@@ -2269,6 +2279,7 @@ export const agentLongTask = task({
                 organizationId,
                 freeQuotaSubject,
                 freeLimits,
+                Boolean(userZaiApiKey && isZaiProviderModelKey(selectedModel)),
               );
             } catch (error) {
               if (!(error instanceof ChatSDKError)) throw error;
@@ -2503,7 +2514,7 @@ export const agentLongTask = task({
               });
               const currentlyAllowedModel = normalizeMaxModelForSubscription(
                 selectedModelOverride,
-                authorization.subscription,
+                resolveProductAccessTier(authorization.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
               );
               if (currentlyAllowedModel !== selectedModelOverride) {
@@ -2592,7 +2603,7 @@ export const agentLongTask = task({
               });
               const currentlyAllowedModel = normalizeMaxModelForSubscription(
                 selectedModelOverride,
-                currentEntitlement.subscription,
+                resolveProductAccessTier(currentEntitlement.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
               );
               if (currentlyAllowedModel !== selectedModelOverride) {
@@ -2941,7 +2952,7 @@ export const agentLongTask = task({
               subscription,
               shouldIncludeNotes: userCustomization?.include_notes ?? true,
             };
-            const trackedProvider = createTrackedProvider();
+            const trackedProvider = createTrackedProvider(userZaiApiKey);
             const [currentSystemPrompt, messagesWithNotes] = await Promise.all([
               systemPrompt(
                 userId,
@@ -3621,6 +3632,7 @@ export const agentLongTask = task({
                 recordFlashRoutingExposure(configuredModel);
               },
               trackedProvider,
+              zaiApiKeyConfigured: Boolean(userZaiApiKey),
               currentSystemPrompt,
               tools,
               mode,

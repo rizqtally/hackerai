@@ -68,6 +68,25 @@ describe("UsageTracker", () => {
       expect(tracker.providerCost).toBeCloseTo(0.003);
     });
 
+    it("does not bill direct-provider steps but keeps their measured usage", () => {
+      tracker.accumulateStep(
+        {
+          inputTokens: 1_000,
+          outputTokens: 500,
+          raw: { cost: 0.02 },
+        },
+        "model-glm-5.3",
+        { billable: false },
+      );
+
+      expect(tracker.providerCost).toBe(0);
+      expect(tracker.computeModelCostDollars("model-glm-5.3")).toBe(0);
+      expect(
+        tracker.measurementProperties("model-glm-5.3")
+          .usage_observed_model_cost_dollars,
+      ).toBe(0.02);
+    });
+
     it("should track lastStepInputTokens from most recent step", () => {
       tracker.accumulateStep({ inputTokens: 100, outputTokens: 0 });
       tracker.accumulateStep({ inputTokens: 200, outputTokens: 0 });

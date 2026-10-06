@@ -201,10 +201,10 @@ export function RegionalSubscriptionGate({
   running: boolean;
 }) {
   const { user } = useAuth();
-  const { subscription, isCheckingProPlan } = useGlobalState();
+  const { accessTier, isCheckingProPlan } = useGlobalState();
   const userId = user?.id;
   const eligible =
-    !!userId && subscription === "free" && !isCheckingProPlan && !running;
+    !!userId && accessTier === "free" && !isCheckingProPlan && !running;
   const [result, setResult] = useState<{
     userId: string;
     assignment: RegionalSubscriptionAssignment | null;

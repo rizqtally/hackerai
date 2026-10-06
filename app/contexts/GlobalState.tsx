@@ -38,7 +38,10 @@ import {
   type DesktopBridgeStatus,
 } from "@/app/hooks/useSandboxPreference";
 import { isTauriEnvironment } from "@/app/hooks/useTauri";
-import { resolveSubscriptionTier } from "@/lib/auth/entitlements";
+import {
+  resolveProductAccessTier,
+  resolveSubscriptionTier,
+} from "@/lib/auth/entitlements";
 import { clearSharedToken, setSharedToken } from "@/lib/auth/shared-token";
 import { chatSidebarStorage } from "@/lib/utils/sidebar-storage";
 import { useMutation, useQuery } from "convex/react";
@@ -128,8 +131,9 @@ interface GlobalStateType {
   isTodoPanelExpanded: boolean;
   setIsTodoPanelExpanded: (expanded: boolean) => void;
 
-  // Subscription state
+  // Subscription state remains billing/usage state; accessTier controls features.
   subscription: SubscriptionTier;
+  accessTier: SubscriptionTier;
   isCheckingProPlan: boolean;
 
   // Rate limit warning dismissal state
@@ -311,6 +315,9 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     if (!Array.isArray(entitlements)) return null;
     return resolveSubscriptionTier(entitlements);
   }, [entitlements]);
+  const accessTier = user
+    ? resolveProductAccessTier(subscription)
+    : "free";
   const refreshAuthTokenAfterEntitlementRefresh = useCallback(async () => {
     clearSharedToken();
 
@@ -741,9 +748,9 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     paidAgentSubscription !== "free";
   const freeDesktopAgentOnlyActive =
     Boolean(user) &&
+    accessTier === "free" &&
     freeSubscriptionResolved &&
     !isCheckingProPlan &&
-    paidAgentSubscription === "free" &&
     isTauriEnvironment();
   const agentOnlyActive = paidAgentOnlyActive || freeDesktopAgentOnlyActive;
   const accessibleChatMode: ChatMode = agentOnlyActive ? "agent" : chatMode;
@@ -786,7 +793,7 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     hasExplicitSandboxPreference,
     chatMode: accessibleChatMode,
     setChatMode,
-    subscription: paidAgentSubscription,
+    subscription: accessTier,
     freeSubscriptionResolved,
     sandboxPreference,
     setSandboxPreference,
@@ -1375,8 +1382,10 @@ const GlobalStateProviderInner: React.FC<GlobalStateProviderProps> = ({
     isTodoPanelExpanded,
     setIsTodoPanelExpanded,
 
-    subscription,
-    isCheckingProPlan,
+  subscription,
+  accessTier,
+  isCheckingProPlan,
+
 
     getInput,
     clearInput,

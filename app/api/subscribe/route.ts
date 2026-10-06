@@ -39,6 +39,10 @@ import {
 import { hasActiveSuspensionForUser } from "@/lib/suspensions";
 import { BILLING_ERRORS } from "@/lib/billing/billing-errors";
 import { hasRecentCanceledRenewalAtRisk } from "@/lib/billing/canceled-renewal-invoice";
+import {
+  BILLING_CHECKOUTS_DISABLED_MESSAGE,
+  BILLING_CHECKOUTS_ENABLED,
+} from "@/lib/billing/availability";
 
 function canManageOrganizationBilling(
   membership: Awaited<
@@ -251,6 +255,13 @@ async function findReusableCheckoutSession({
 }
 
 export const POST = async (req: NextRequest) => {
+  if (!BILLING_CHECKOUTS_ENABLED) {
+    return NextResponse.json(
+      { error: BILLING_CHECKOUTS_DISABLED_MESSAGE },
+      { status: 410 },
+    );
+  }
+
   const requestId = req.headers.get("x-vercel-id") ?? "unknown";
   let shouldClearReferralCookies = false;
   const json = (body: unknown, init?: ResponseInit) => {

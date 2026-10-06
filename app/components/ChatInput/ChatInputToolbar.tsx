@@ -45,6 +45,12 @@ export function ChatInputToolbar({
     chatMode === "ask" &&
     !hasLocalSandbox,
   );
+  const showChatModeSelector = Boolean(
+    user &&
+    chatModeAccessResolved &&
+    !paidAgentOnlyActive &&
+    !freeDesktopAgentOnlyActive,
+  );
 
   return (
     <div className="flex min-w-0 items-center gap-2 px-3">
@@ -58,12 +64,7 @@ export function ChatInputToolbar({
             disabled={!isOnline}
           />
         </div>
-        {user &&
-        chatModeAccessResolved &&
-        !paidAgentOnlyActive &&
-        !freeDesktopAgentOnlyActive ? (
-          <ChatModeSelector />
-        ) : null}
+        {showChatModeSelector ? <ChatModeSelector /> : null}
         {showFreeAskComputerActivation ? <FreeAskComputerActivation /> : null}
         {user && isAgentMode(chatMode) ? (
           <>

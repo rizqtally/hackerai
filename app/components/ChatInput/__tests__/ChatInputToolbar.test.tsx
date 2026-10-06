@@ -78,6 +78,7 @@ jest.mock("@/app/contexts/GlobalState", () => ({
     selectedModel: "auto",
     setSelectedModel: jest.fn(),
     subscription: mockSubscription,
+    accessTier: mockSubscription === "free" ? "pro" : mockSubscription,
     chatModeAccessResolved: mockChatModeAccessResolved,
     hasLocalSandbox: mockHasLocalSandbox,
     paidAgentOnlyActive: mockPaidAgentOnlyActive,

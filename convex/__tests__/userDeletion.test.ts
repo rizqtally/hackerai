@@ -299,6 +299,22 @@ function seedTables(userId = "user_123", otherUserId = "user_other"): Tables {
       { _id: "custom-user", user_id: userId, updated_at: 1 },
       { _id: "custom-other", user_id: otherUserId, updated_at: 1 },
     ],
+    zai_api_credentials: [
+      {
+        _id: "zai-key-user",
+        user_id: userId,
+        encrypted_api_key: "encrypted-user-key",
+        key_last_four: "1234",
+        updated_at: 1,
+      },
+      {
+        _id: "zai-key-other",
+        user_id: otherUserId,
+        encrypted_api_key: "encrypted-other-key",
+        key_last_four: "5678",
+        updated_at: 1,
+      },
+    ],
     extra_usage: [
       {
         _id: "extra-user",
@@ -1333,6 +1349,7 @@ describe("userDeletion", () => {
           user_id: "user_123",
           content: payload,
         })),
+        zai_api_credentials: [],
         usage_logs: Array.from({ length: 6 }, (_, i) => ({
           _id: `u${i}`,
           user_id: "user_123",
@@ -1388,6 +1405,7 @@ describe("userDeletion", () => {
         "subagent_messages",
         "subagent_runs",
         "notes",
+        "zai_api_credentials",
       ])
         expect(tables[table]).toHaveLength(0);
       expect(tables.usage_logs.every((row) => row.user_id !== "user_123")).toBe(

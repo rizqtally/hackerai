@@ -67,7 +67,18 @@ export function selectModel(
   );
   // Paid Standard uses native GLM vision as well as text/PDF parsing. Resolve
   // it before the legacy media promotions so every paid plan keeps this route.
-  if (subscription !== "free" && allowedSelectedModel === "hackerai-standard") {
+  if (
+    subscription !== "free" &&
+    (allowedSelectedModel === "hackerai-standard" ||
+      allowedSelectedModel === "zai-glm-5.2" ||
+      allowedSelectedModel === "zai-glm-5.3" ||
+      allowedSelectedModel === "zai-glm-5.3-flash")
+  ) {
+    if (hasImageAttachment && allowedSelectedModel !== "zai-glm-5.3-flash") {
+      return mode === "agent"
+        ? "model-glm-5.3-flash-agent"
+        : "model-glm-5.3-flash";
+    }
     return resolveTierToProviderKey(allowedSelectedModel, mode);
   }
   // Pro/Pro+ Auto uses GLM Flash for lower-cost direct vision.
@@ -683,6 +694,7 @@ export async function processChatMessages({
   mode,
   userId,
   subscription,
+  accessTier = subscription,
   uploadBasePath,
   modelOverride,
   extraUsageAvailable = false,
@@ -699,6 +711,7 @@ export async function processChatMessages({
   mode: ChatMode;
   userId: string;
   subscription: SubscriptionTier;
+  accessTier?: SubscriptionTier;
   uploadBasePath?: string;
   modelOverride?: SelectedModel;
   extraUsageAvailable?: boolean;
@@ -732,7 +745,7 @@ export async function processChatMessages({
       mode,
       userId,
       uploadBasePath,
-      subscription,
+      accessTier,
       allowLocalDesktopFiles,
       { chatId, triggerRunId, requestId },
     );
@@ -783,7 +796,7 @@ export async function processChatMessages({
   // Select the appropriate model early so we can make model-aware decisions below
   const selectedModel = selectModel(
     mode,
-    subscription,
+    accessTier,
     modelOverride,
     mediaAttachmentRouting.hasImage,
     mediaAttachmentRouting.hasPdf,

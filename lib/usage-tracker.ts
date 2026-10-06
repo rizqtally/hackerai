@@ -44,6 +44,7 @@ type ModelStepCost = {
   cacheReadTokens: number;
   cacheWriteTokens: number;
   modelName?: string;
+  billable: boolean;
 };
 
 export type UsageBillingType = "included" | "extra" | "mixed";
@@ -151,7 +152,12 @@ export class UsageTracker {
     this.modelStepCosts = [];
   }
 
-  accumulateStep(usage: StepUsage, modelName?: string): number {
+  accumulateStep(
+    usage: StepUsage,
+    modelName?: string,
+    options: { billable?: boolean } = {},
+  ): number {
+    const billable = options.billable ?? true;
     const reportedCacheReadTokens = usage.inputTokenDetails?.cacheReadTokens;
     const reportedCacheWriteTokens = usage.inputTokenDetails?.cacheWriteTokens;
     const cacheReadTokens = isValidCacheTokenCount(reportedCacheReadTokens)
@@ -191,8 +197,9 @@ export class UsageTracker {
         cacheReadTokens,
         cacheWriteTokens,
         modelName,
+        billable,
       }) - 1;
-    if (isPositiveFiniteNumber(stepCost)) {
+    if (billable && isPositiveFiniteNumber(stepCost)) {
       this.providerCost += stepCost;
       this.modelProviderCost += stepCost;
     }
@@ -246,6 +253,7 @@ export class UsageTracker {
       cacheReadTokens,
       cacheWriteTokens,
       modelName: usage.model,
+      billable: true,
     });
     if (rawCost > 0) {
       // Summarization survives resetModelLeg(), so do not include it in
@@ -268,6 +276,7 @@ export class UsageTracker {
 
     const stepCost = this.modelStepCosts[stepCostIndex];
     if (!stepCost) return;
+    if (!stepCost.billable) return;
 
     const previousCost = stepCost.authoritativeCost ?? stepCost.rawCost;
     stepCost.authoritativeCost = costDollars;
@@ -398,6 +407,7 @@ export class UsageTracker {
     }
 
     return modelSteps.reduce((totalCost, stepCost) => {
+      if (!stepCost.billable) return totalCost;
       const authoritativeCost = stepCost.authoritativeCost ?? stepCost.rawCost;
       if (isPositiveFiniteNumber(authoritativeCost)) {
         return totalCost + authoritativeCost;

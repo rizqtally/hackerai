@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { Button } from "@/components/ui/button";
 import { useGlobalState } from "@/app/contexts/GlobalState";
-import { redirectToPricing } from "@/app/hooks/usePricingDialog";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -22,7 +21,6 @@ import {
   Loader2,
   PauseCircle,
   Play,
-  Sparkle,
   Undo2,
 } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -383,7 +381,7 @@ const AccountTab = () => {
                     ? "HackerAI Pro+"
                     : subscription === "pro"
                       ? "HackerAI Pro"
-                      : "Get HackerAI Pro"}
+                      : "HackerAI Free"}
             </div>
             {renewalPrice && (
               <div className="mt-0.5 text-sm text-muted-foreground">
@@ -415,25 +413,6 @@ const AccountTab = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {!currentCancellationStatus?.statusUnavailable &&
-                    (subscription === "pro" || subscription === "pro-plus") && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            redirectToPricing({
-                              surface: "account_tab_manage_menu",
-                              source: "account_settings",
-                              from_tier: subscription,
-                              cta_text: "Upgrade plan",
-                            })
-                          }
-                        >
-                          <Sparkle className="h-4 w-4" />
-                          <span>Upgrade plan</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
                   {cancellationScheduled ? (
                     <>
                       <DropdownMenuItem disabled>
@@ -516,23 +495,7 @@ const AccountTab = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null
-          ) : (
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={() =>
-                redirectToPricing({
-                  surface: "account_tab",
-                  source: "account_settings",
-                  from_tier: subscription,
-                  cta_text: "Upgrade",
-                })
-              }
-            >
-              Upgrade
-            </Button>
-          )}
+          ) : null}
         </div>
 
         {cancellationScheduled && scheduledPause && (

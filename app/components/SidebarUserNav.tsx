@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import {
   Activity,
   LogOut,
-  Sparkle,
   LifeBuoy,
   ChevronRight,
   ChevronDown,
@@ -23,7 +22,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useGlobalState } from "@/app/contexts/GlobalState";
-import { redirectToPricing } from "../hooks/usePricingDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsStandalone } from "@/hooks/use-is-standalone";
 import {
@@ -65,75 +63,6 @@ const XIcon = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
-
-// Upgrade banner component
-const UpgradeBanner = ({ isCollapsed }: { isCollapsed: boolean }) => {
-  const { isCheckingProPlan, subscription } = useGlobalState();
-  const isProUser = subscription !== "free";
-
-  // Don't show for pro users or while checking
-  if (isCheckingProPlan || isProUser) {
-    return null;
-  }
-
-  const handleUpgrade = () => {
-    redirectToPricing({
-      surface: "sidebar_upgrade_banner",
-      source: "sidebar",
-      from_tier: subscription,
-      cta_text: "Upgrade to Pro",
-    });
-  };
-
-  if (isCollapsed) {
-    return (
-      <div className="mb-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                data-testid="upgrade-button-collapsed"
-                variant="secondary"
-                size="sm"
-                className="h-8 w-full border-0 bg-premium-bg px-2 text-premium-text hover:bg-premium-hover"
-                onClick={handleUpgrade}
-                aria-label="Upgrade to Pro"
-              >
-                <Zap className="size-4 fill-current" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Upgrade to Pro</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mb-2">
-      <button
-        type="button"
-        onClick={handleUpgrade}
-        aria-label="Upgrade to Pro and unlock more features"
-        className="bg-muted/50 hover:bg-muted/80 border-sidebar-border hover:border-violet-500/70 dark:hover:border-violet-400/70 flex w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-      >
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-foreground truncate text-sm font-medium leading-none">
-            Upgrade to Pro
-          </p>
-          <p className="text-muted-foreground truncate text-xs">
-            Unlock more features
-          </p>
-        </div>
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-premium-bg text-premium-text">
-          <Zap className="size-4 fill-current" />
-        </div>
-      </button>
-    </div>
-  );
-};
 
 const SidebarUserNav = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   const { user } = useAuth();
@@ -303,8 +232,6 @@ const SidebarUserNav = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
         onOpenChange={setReferralDialogOpen}
       />
 
-      {/* Upgrade banner above user nav */}
-      <UpgradeBanner isCollapsed={isCollapsed} />
 
       <DropdownMenu
         onOpenChange={(open) => {
@@ -398,23 +325,6 @@ const SidebarUserNav = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
           <DropdownMenuSeparator />
 
-          {(subscription === "pro" || subscription === "pro-plus") && (
-            <DropdownMenuItem
-              data-testid="upgrade-menu-item"
-              onClick={() =>
-                redirectToPricing({
-                  surface: "sidebar_user_menu",
-                  source: "account_menu",
-                  from_tier: subscription,
-                  cta_text: "Upgrade Plan",
-                })
-              }
-              className="py-1.5"
-            >
-              <Sparkle className="mr-2 h-4 w-4 text-foreground" />
-              <span>Upgrade Plan</span>
-            </DropdownMenuItem>
-          )}
 
           {isPaidUser && (
             <DropdownMenuItem

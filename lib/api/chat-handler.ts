@@ -154,7 +154,11 @@ import {
   BACKGROUND_WORK_DRAIN_TIMEOUT_MS,
   drainBackgroundWork,
 } from "@/lib/chat/background-work-drain";
-import { createTrackedProvider } from "@/lib/ai/providers";
+import {
+  createTrackedProvider,
+  isZaiProviderModelKey,
+} from "@/lib/ai/providers";
+import { getZaiApiKeyForUser } from "@/lib/ai/zai-credentials";
 import {
   getSandboxUploadFailureMetadata,
   getSandboxUploadUserMessage,
@@ -367,19 +371,24 @@ export const createChatHandler = () => {
       });
       const requestMessages = requireChatMessagesArray(messages);
 
-      const { userId, subscription, organizationId, freeQuotaSubject } =
-        await getUserIDAndPro(req);
+      const {
+        userId,
+        subscription,
+        accessTier,
+        organizationId,
+        freeQuotaSubject,
+      } = await getUserIDAndPro(req);
       paidDailyFreeAllowanceUserId = userId;
       const freeUsageSubject = freeQuotaSubject ?? userId;
       let selectedModelOverride: SelectedModel | undefined =
         normalizeSelectedModelOverrideForSubscription(
           coerceSelectedModel(rawSelectedModel ?? null),
-          subscription,
+          accessTier,
         );
       await assertUserCanMakeCostIncurringRequest(userId);
       await enforceRegionalSubscriptionFirst({
         userId,
-        subscription,
+        subscription: accessTier,
         country: subscriptionFirstCountryFromRequest(req),
         surface: "ask",
       });
@@ -405,7 +414,7 @@ export const createChatHandler = () => {
 
       assertFreeAgentGates({
         mode,
-        subscription,
+        subscription: accessTier,
         sandboxPreference,
       });
 
@@ -431,7 +440,7 @@ export const createChatHandler = () => {
         getMessagesByChatId({
           chatId,
           userId,
-          subscription,
+          subscription: accessTier,
           newMessages: requestMessages,
           regenerate,
           mode,
@@ -445,7 +454,7 @@ export const createChatHandler = () => {
       // round-trip at the end. getNotes never rejects (it returns [] on error).
       const shouldIncludeNotes = userCustomization?.include_notes ?? true;
       const preloadedNotes = shouldIncludeNotes
-        ? getNotes({ userId, subscription })
+        ? getNotes({ userId, subscription: accessTier })
         : undefined;
 
       const [projectContext, baseExtraUsageConfig] = await Promise.all([
@@ -464,7 +473,7 @@ export const createChatHandler = () => {
         }),
       ]);
       const truncatedMessages =
-        subscription === "free"
+        accessTier === "free"
           ? stripImageAttachments(fetched.truncatedMessages)
           : fetched.truncatedMessages;
 
@@ -473,8 +482,9 @@ export const createChatHandler = () => {
         { regenerate },
       );
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
+      const userZaiApiKey = await getZaiApiKeyForUser(userId);
       selectedModelOverride =
-        normalizeMaxModelForSubscription(selectedModelOverride, subscription, {
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
           extraUsageAvailable,
         }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
@@ -486,7 +496,7 @@ export const createChatHandler = () => {
       const directGlmVisionEnabled =
         (isAgentMode(mode) || attachmentCounts.imageCount > 0) &&
         isEligibleForDirectGlmVision({
-          subscription,
+          subscription: accessTier,
           selectedModelOverride,
         });
       await handleInitialChatAndUserMessage({
@@ -506,7 +516,7 @@ export const createChatHandler = () => {
       });
       const freeLimits = regionalFreeLimits;
       const freeMonthlyBudgetSnapshot =
-        subscription === "free"
+        subscription === "free" && !userZaiApiKey
           ? await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits)
           : null;
 
@@ -544,6 +554,7 @@ export const createChatHandler = () => {
         mode,
         userId,
         subscription,
+        accessTier,
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
@@ -632,12 +643,12 @@ export const createChatHandler = () => {
       if (flashRoutingAssignment)
         selectedModel = flashRoutingAssignment.modelKey;
       const notesEnabled =
-        (subscription !== "free" || isAgentMode(mode)) &&
+        (accessTier !== "free" || isAgentMode(mode)) &&
         (userCustomization?.include_notes ?? true);
 
       const estimatedInputTokens = await estimatePreflightInputTokens({
         mode,
-        subscription,
+        subscription: accessTier,
         userId,
         selectedModel,
         userCustomization,
@@ -687,6 +698,7 @@ export const createChatHandler = () => {
             organizationId,
             freeQuotaSubject,
             freeLimits,
+            Boolean(userZaiApiKey && isZaiProviderModelKey(selectedModel)),
           ));
       } catch (error) {
         if (!(error instanceof ChatSDKError)) {
@@ -1096,7 +1108,7 @@ export const createChatHandler = () => {
                 )
               : Promise.resolve(undefined);
 
-            const trackedProvider = createTrackedProvider();
+            const trackedProvider = createTrackedProvider(userZaiApiKey);
 
             let currentSystemPrompt = await systemPrompt(
               userId,
@@ -1115,7 +1127,7 @@ export const createChatHandler = () => {
             const contextUsageOn = isContextUsageEnabled(subscription, mode);
             const ctxSystemTokens = contextUsageOn ? systemPromptTokens : 0;
             const ctxMaxTokens = contextUsageOn
-              ? getMaxTokensForSubscription(subscription, { mode })
+              ? getMaxTokensForSubscription(accessTier, { mode })
               : 0;
             // finalMessages will be set in prepareStep if summarization is needed
             let finalMessages = processedMessages;
@@ -1648,6 +1660,7 @@ export const createChatHandler = () => {
                 recordFlashRoutingExposure(configuredModel);
               },
               trackedProvider,
+              zaiApiKeyConfigured: Boolean(userZaiApiKey),
               currentSystemPrompt,
               tools,
               mode,

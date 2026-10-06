@@ -144,6 +144,7 @@ export const checkRateLimit = async (
   organizationId?: string,
   freeQuotaSubject?: string,
   freeLimits?: FreeLimitPolicy,
+  skipModelCharges = false,
 ): Promise<RateLimitInfo> => {
   // Free users: fixed daily window
   if (subscription === "free") {
@@ -163,6 +164,7 @@ export const checkRateLimit = async (
     extraUsageConfig,
     modelName,
     organizationId,
+    !skipModelCharges,
   );
 };
 

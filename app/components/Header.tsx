@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { navigateToAuth } from "@/app/hooks/useTauri";
 import {
-  CreditCard,
   Download,
   LayoutGrid,
   Menu,
@@ -24,7 +23,6 @@ import {
 
 const publicNavigation = [
   { href: "/product", label: "Product", icon: LayoutGrid },
-  { href: "/pricing", label: "Pricing", icon: CreditCard },
   { href: "/download", label: "Download", icon: Download },
   { href: "/trust", label: "Trust", icon: ShieldCheck },
 ] as const;

@@ -5,6 +5,10 @@ import { requireAdminOrg } from "../../team-auth";
 import { normalizeCheckoutAttemptId } from "@/lib/analytics/paid-funnel";
 import { hasActiveSuspensionForUser } from "@/lib/suspensions";
 import { BILLING_ERRORS } from "@/lib/billing/billing-errors";
+import {
+  BILLING_CHECKOUTS_DISABLED_MESSAGE,
+  BILLING_CHECKOUTS_ENABLED,
+} from "@/lib/billing/availability";
 
 /**
  * POST /api/team/extra-usage/purchase
@@ -13,6 +17,13 @@ import { BILLING_ERRORS } from "@/lib/billing/billing-errors";
  * existing Stripe customer (the same one used for the team subscription).
  */
 export const POST = async (req: NextRequest) => {
+  if (!BILLING_CHECKOUTS_ENABLED) {
+    return NextResponse.json(
+      { error: BILLING_CHECKOUTS_DISABLED_MESSAGE },
+      { status: 410 },
+    );
+  }
+
   try {
     const guard = await requireAdminOrg(req);
     if (!guard.ok) return guard.response;

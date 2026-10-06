@@ -6,11 +6,9 @@ import { ChatInput } from "../components/ChatInput";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Chat } from "../components/chat";
-import PricingDialog from "../components/PricingDialog";
 import { TeamWelcomeDialog } from "../components/TeamDialogs";
 import MigratePentestgptDialog from "../components/MigratePentestgptDialog";
 import { ExtraUsagePurchaseToast } from "../components/extra-usage";
-import { usePricingDialog } from "../hooks/usePricingDialog";
 import { useGlobalState } from "../contexts/GlobalState";
 import { useComposerInput } from "../contexts/ComposerState";
 import { usePentestgptMigration } from "../hooks/usePentestgptMigration";
@@ -51,22 +49,6 @@ const UnauthenticatedContent = () => {
   const handleStop = () => {
     // No-op for unauthenticated users
   };
-
-  React.useEffect(() => {
-    const checkHash = () => {
-      if (
-        window.location.hash === "#pricing" ||
-        window.location.hash === "#team-pricing-seat-selection"
-      ) {
-        navigateToAuth("/signup?intent=pricing", {
-          preferSignInForReturningUser: true,
-        });
-      }
-    };
-    checkHash();
-    window.addEventListener("hashchange", checkHash);
-    return () => window.removeEventListener("hashchange", checkHash);
-  }, []);
 
   return (
     <div className="h-full bg-background flex flex-col overflow-hidden">
@@ -128,8 +110,6 @@ export default function HomePageClient() {
     migrateFromPentestgptDialogOpen,
     setMigrateFromPentestgptDialogOpen,
   } = useGlobalState();
-  const { showPricing, handleClosePricing, pricingContext } =
-    usePricingDialog(subscription);
   const { isLoading, isAuthenticated } = useConvexAuth();
   const hasAuthHint = useHasAuthenticatedBefore();
 
@@ -139,11 +119,6 @@ export default function HomePageClient() {
       <>
         <AuthenticatedContent />
         <ExtraUsagePurchaseToast />
-        <PricingDialog
-          isOpen={showPricing}
-          onClose={handleClosePricing}
-          context={pricingContext}
-        />
         <TeamWelcomeDialog
           open={teamWelcomeDialogOpen}
           onOpenChange={setTeamWelcomeDialogOpen}

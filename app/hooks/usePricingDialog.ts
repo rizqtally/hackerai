@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SubscriptionTier } from "@/types";
-import {
-  addAuthenticatedExceptionStep,
-  captureAuthenticatedEvent,
-  captureUpgradeCtaClick,
-} from "@/lib/analytics/client";
+import { addAuthenticatedExceptionStep, captureAuthenticatedEvent } from "@/lib/analytics/client";
+import { toast } from "sonner";
 
 type PricingRedirectAnalytics = {
   surface?: string;
@@ -173,38 +170,6 @@ export const usePricingDialog = (subscription?: SubscriptionTier) => {
 // Utility function to redirect to pricing (can be used without the hook)
 // Note: This doesn't check subscription tier, so use sparingly
 // Consider using openPricing from the hook instead when possible
-export const redirectToPricing = (analytics: PricingRedirectAnalytics = {}) => {
-  captureUpgradeCtaClick({
-    surface: analytics.surface ?? "unknown",
-    source: analytics.source ?? "redirect_to_pricing",
-    ...(analytics.from_tier && { from_tier: analytics.from_tier }),
-    ...(analytics.reason && { reason: analytics.reason }),
-    ...(analytics.limit_type && { limit_type: analytics.limit_type }),
-    ...(analytics.cta_text && { cta_text: analytics.cta_text }),
-  });
-
-  const url = new URL(window.location.href);
-  clearPricingContextParams(url);
-  if (analytics.surface) {
-    url.searchParams.set(PRICING_CONTEXT_PARAMS.surface, analytics.surface);
-  }
-  if (analytics.source) {
-    url.searchParams.set(PRICING_CONTEXT_PARAMS.source, analytics.source);
-  }
-  if (analytics.from_tier) {
-    url.searchParams.set(PRICING_CONTEXT_PARAMS.fromTier, analytics.from_tier);
-  }
-  if (analytics.reason) {
-    url.searchParams.set(PRICING_CONTEXT_PARAMS.reason, analytics.reason);
-  }
-  if (analytics.limit_type) {
-    url.searchParams.set(
-      PRICING_CONTEXT_PARAMS.limitType,
-      analytics.limit_type,
-    );
-  }
-  url.hash = "pricing";
-
-  window.history.pushState(null, document.title || "", url.toString());
-  window.dispatchEvent(new Event("hashchange"));
+export const redirectToPricing = (_analytics: PricingRedirectAnalytics = {}) => {
+  toast.info("HackerAI is free to use. No payment is required.");
 };

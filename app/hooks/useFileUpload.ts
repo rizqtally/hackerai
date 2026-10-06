@@ -163,7 +163,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
     addUploadedFile,
     updateUploadedFile,
     removeUploadedFile,
-    subscription,
+    accessTier,
     getTotalTokens,
     sandboxPreference,
     desktopEnvironmentId,
@@ -450,7 +450,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
           );
           const newTotal = currentTotal + tokens;
 
-          const maxFileTokens = getMaxFileTokens(subscription);
+          const maxFileTokens = getMaxFileTokens(accessTier);
           if (newTotal > maxFileTokens) {
             // Exceeds limit - delete file from storage and remove from upload list
             deleteFile({ fileId: fileId as Id<"files"> }).catch(console.error);
@@ -582,7 +582,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
       showRateLimitWarning,
       mode,
       sandboxPreference,
-      subscription,
+      accessTier,
     ],
   );
 
@@ -778,7 +778,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
 
   const processLocalDesktopPaths = useCallback(
     async (paths: string[]) => {
-      if (subscription === "free") {
+      if (accessTier === "free") {
         toast.error("Upgrade plan to upload files.");
         return;
       }
@@ -893,7 +893,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
       }
     },
     [
-      subscription,
+      accessTier,
       uploadedFiles.length,
       maxFilesLimit,
       startDesktopSelectedFiles,
@@ -910,7 +910,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
       } = {},
     ): Promise<boolean> => {
       // Check if user has pro plan for file uploads
-      if (subscription === "free") {
+      if (accessTier === "free") {
         toast.error("Upgrade plan to upload files.");
         return false;
       }
@@ -934,7 +934,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
       return false;
     },
     [
-      subscription,
+      accessTier,
       validateAndFilterFiles,
       showProcessingFeedback,
       startFileUploads,
@@ -1234,7 +1234,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
 
   const handlePastedTextAttachment = useCallback(
     async (text: string): Promise<boolean> => {
-      if (subscription === "free" || !isAgentMode(mode) || !text.trim()) {
+      if (accessTier === "free" || !isAgentMode(mode) || !text.trim()) {
         return false;
       }
 
@@ -1244,7 +1244,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
       }
       return started;
     },
-    [mode, processGeneratedPastedText, subscription],
+    [mode, processGeneratedPastedText, accessTier],
   );
 
   const handlePasteEvent = async (event: ClipboardEvent): Promise<boolean> => {
@@ -1261,7 +1261,7 @@ export const useFileUpload = (mode: ChatMode = "ask") => {
     }
 
     if (
-      subscription !== "free" &&
+      accessTier !== "free" &&
       isAgentMode(mode) &&
       pastedText.length >= PASTED_TEXT_ATTACHMENT_MIN_CHARS &&
       (!items || Array.from(items).every((item) => item.kind !== "file"))

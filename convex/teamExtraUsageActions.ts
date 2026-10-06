@@ -8,6 +8,10 @@ import { WorkOS } from "@workos-inc/node";
 import { convexLogger } from "./lib/logger";
 import { extraUsageDollarsToPoints } from "./lib/extraUsagePricing";
 import { BILLING_ERRORS } from "../lib/billing/billing-errors";
+import {
+  BILLING_CHECKOUTS_DISABLED_MESSAGE,
+  BILLING_CHECKOUTS_ENABLED,
+} from "../lib/billing/availability";
 
 // =============================================================================
 // SDK Initialization (lazy, cached)
@@ -311,6 +315,10 @@ export const createTeamPurchaseSession = action({
     checkoutSessionId: v.optional(v.string()),
   }),
   handler: async (_ctx, args) => {
+    if (!BILLING_CHECKOUTS_ENABLED) {
+      return { url: null, error: BILLING_CHECKOUTS_DISABLED_MESSAGE };
+    }
+
     if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
       return { url: null, error: "Invalid service key" };
     }

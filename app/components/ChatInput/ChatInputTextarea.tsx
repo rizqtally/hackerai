@@ -44,7 +44,7 @@ export function ChatInputTextarea({
 }: ChatInputTextareaProps) {
   const input = useComposerInput();
   const { setInput } = useComposerActions();
-  const { subscription } = useGlobalState();
+  const { accessTier } = useGlobalState();
   const { handlePasteEvent, handlePastedTextAttachment } =
     useFileUpload(chatMode);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -107,7 +107,7 @@ export function ChatInputTextarea({
         return;
       }
 
-      const maxTokens = getMaxTokensForSubscription(subscription, {
+      const maxTokens = getMaxTokensForSubscription(accessTier, {
         mode: chatMode,
       });
       if (!inputTokenCountCouldExceedLimit(pastedText, [], maxTokens)) {
@@ -125,12 +125,12 @@ export function ChatInputTextarea({
         maxTokens,
       );
       if (tokenLimitStatus.exceedsLimit) {
-        if (subscription !== "free" && isAgentMode(chatMode)) {
+        if (accessTier !== "free" && isAgentMode(chatMode)) {
           await handlePastedTextAttachment(pastedText);
           return;
         }
 
-        const planText = subscription !== "free" ? "" : " (Free plan limit)";
+        const planText = accessTier !== "free" ? "" : " (Free plan limit)";
         toast.error("Content is too long to paste", {
           description: `The content you're trying to paste is too large (${tokenLimitStatus.tokenCount.toLocaleString()} tokens). Please copy a smaller amount${planText}.`,
         });
@@ -160,7 +160,7 @@ export function ChatInputTextarea({
     handlePasteEvent,
     handlePastedTextAttachment,
     setInput,
-    subscription,
+    accessTier,
   ]);
 
   return (

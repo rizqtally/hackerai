@@ -45,6 +45,12 @@ export function resolveSubscriptionTier(
   return "free";
 }
 
+export function resolveProductAccessTier(
+  subscription: SubscriptionTier,
+): SubscriptionTier {
+  return subscription === "free" ? "pro" : subscription;
+}
+
 export function hasPaidEntitlement(entitlements: readonly string[]): boolean {
   return resolveSubscriptionTier(entitlements) !== "free";
 }

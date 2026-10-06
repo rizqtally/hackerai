@@ -47,7 +47,6 @@ describe("Header", () => {
 
     for (const [name, href] of [
       ["Product", "/product"],
-      ["Pricing", "/pricing"],
       ["Download", "/download"],
       ["Trust", "/trust"],
     ]) {

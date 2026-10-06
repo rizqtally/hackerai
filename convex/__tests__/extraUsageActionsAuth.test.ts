@@ -30,6 +30,11 @@ jest.mock("../lib/logger", () => ({
     error: jest.fn(),
   },
 }));
+jest.mock("../../lib/billing/availability", () => ({
+  BILLING_CHECKOUTS_ENABLED: true,
+  BILLING_CHECKOUTS_DISABLED_MESSAGE:
+    "Paid checkout is currently unavailable. No payment is required to use HackerAI.",
+}));
 
 const mockListOrganizationMemberships = jest.fn();
 const mockGetOrganization = jest.fn();

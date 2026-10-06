@@ -19,6 +19,7 @@ import {
 } from "../types/chat";
 import {
   parseEntitlements,
+  resolveProductAccessTier,
   resolveSubscriptionTier,
 } from "../lib/auth/entitlements";
 import { parseSandboxScopedAgentApprovalTargetPrefix } from "../types/agent";
@@ -809,9 +810,9 @@ export const updateChatPreferences = mutation({
       // with a value the load path will silently rewrite later. Unknown ids
       // are dropped (skipped) rather than written verbatim.
       const coerced = coerceSelectedModel(args.selectedModel);
-      const subscription = resolveSubscriptionTier(
-        parseEntitlements(user.entitlements),
-      );
+  const subscription = resolveProductAccessTier(
+    resolveSubscriptionTier(parseEntitlements(user.entitlements)),
+  );
       if (coerced !== null || subscription === "free") {
         patch.selected_model = normalizeSelectedModelForSubscription(
           coerced,

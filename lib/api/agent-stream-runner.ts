@@ -119,6 +119,7 @@ import {
 import {
   isAnthropicModel,
   isDeepSeekModel,
+  isZaiProviderModelKey,
   PDF_PARSER_ENGINE_HEADER,
   PDF_PARSER_RECOVERY_HEADER,
 } from "@/lib/ai/providers";
@@ -725,6 +726,7 @@ export type AgentStreamContext = {
     baselineModel: string;
   };
   trackedProvider: ReturnType<typeof createTrackedProvider>;
+  zaiApiKeyConfigured?: boolean;
   currentSystemPrompt: string;
   tools: ToolSet;
   mode: ChatMode;
@@ -2449,6 +2451,12 @@ export async function createAgentStream(
         stepUsageCostIndex = ctx.usageTracker.accumulateStep(
           usage as Parameters<typeof ctx.usageTracker.accumulateStep>[0],
           stepAccountingModel,
+          {
+            billable: !(
+              ctx.zaiApiKeyConfigured &&
+              isZaiProviderModelKey(activeStepModelName)
+            ),
+          },
         );
         state.lastStepInputTokens = usage.inputTokens || 0;
         if (usage.inputTokens) {

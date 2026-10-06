@@ -60,12 +60,12 @@ export function SandboxSelector({
   const [connectHovered, setConnectHovered] = useState(false);
   const { isTauri } = useTauri();
   const {
-    subscription,
+    accessTier,
     localConnections: connections,
     desktopBridgeStatus,
     desktopEnvironmentId,
   } = useGlobalState();
-  const isFreeUser = subscription === "free";
+  const isFreeUser = accessTier === "free";
 
   const selectedConnectionKnown = Boolean(
     connections?.some((connection) =>
