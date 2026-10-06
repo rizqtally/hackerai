@@ -589,6 +589,13 @@ export default defineSchema({
       "occurred_at",
     ]),
 
+  zai_api_credentials: defineTable({
+    user_id: v.string(),
+    encrypted_api_key: v.string(),
+    key_last_four: v.string(),
+    updated_at: v.number(),
+  }).index("by_user_id", ["user_id"]),
+
   user_customization: defineTable({
     user_id: v.string(),
     nickname: v.optional(v.string()),

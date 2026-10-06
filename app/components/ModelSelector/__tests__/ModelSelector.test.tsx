@@ -77,6 +77,28 @@ describe("ModelSelector", () => {
     expect(mockUseQuery.mock.calls.at(-1)?.[1]).toEqual({});
   });
 
+  it("shows personal GLM options only when an account key is connected", async () => {
+    const user = userEvent.setup();
+    mockMaxEntitlement = { configured: false, extraUsageAvailable: true };
+    const disconnected = render(
+      <ModelSelector value="auto" onChange={jest.fn()} mode="ask" />,
+    );
+    await user.click(screen.getByRole("button", { name: /^Auto$/i }));
+    expect(screen.queryByRole("button", { name: /GLM 5\.2/ })).toBeNull();
+    disconnected.unmount();
+
+    mockMaxEntitlement = { configured: true, extraUsageAvailable: true };
+    const { unmount } = render(
+      <ModelSelector value="auto" onChange={jest.fn()} mode="ask" />,
+    );
+    await user.click(screen.getByRole("button", { name: /^Auto$/i }));
+    expect(screen.getByRole("button", { name: /GLM 5\.2/ })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /GLM 5\.3 Flash/ }),
+    ).toBeVisible();
+    unmount();
+  });
+
   it("shows model choices immediately while Auto is selected", () => {
     render(<ModelSelector value="auto" onChange={jest.fn()} mode="ask" />);
 

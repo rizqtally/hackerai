@@ -7,6 +7,7 @@ import {
   ABLITERATION_MODEL_KEY,
 } from "@/lib/ai/abliteration";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { ChatMode, SelectedModel } from "@/types/chat";
 import { openrouterAttributionHeaders } from "@/lib/ai/openrouter-attribution";
 
@@ -1290,6 +1291,18 @@ const baseProviders: ReturnType<typeof buildProviderMap> = {
 
 export type ModelName = keyof typeof baseProviders;
 
+const ZAI_PROVIDER_MODEL_KEYS = new Set([
+  "ask-model-free-glm",
+  "model-glm-5.2",
+  "model-glm-5.3",
+  "model-glm-5.3-flash",
+  "model-glm-5.3-flash-pro",
+  "model-glm-5.3-flash-agent",
+]);
+
+export const isZaiProviderModelKey = (modelName: string): boolean =>
+  ZAI_PROVIDER_MODEL_KEYS.has(modelName);
+
 export const modelCutoffDates: Partial<Record<ModelName, string>> &
   Record<string, string | undefined> = {
   "ask-model": "August 2026",
@@ -1431,11 +1444,10 @@ export function supportsMultimodalToolResults(modelName?: string): boolean {
 }
 
 /**
- * Map a HackerAI tier id to the underlying provider key for a given mode.
+ * Map a selected tier or direct GLM model id to its provider key.
  * Returns `null` for `"auto"` (the caller routes to the auto-router model
- * key instead). Standard maps to DeepSeek V4 Flash 0731. Pro uses DeepSeek
- * V4 Pro 0813 in Ask and V4.1 Flash in Agent. Max uses GLM 5.3 in both
- * modes; media-aware routing happens in `selectModel`.
+ * key instead). Tier routes remain mode-aware; direct GLM choices retain the
+ * chosen model in both modes.
  */
 export function resolveTierToProviderKey(
   tier: Exclude<SelectedModel, "auto">,
@@ -1461,7 +1473,12 @@ export function resolveTierToProviderKey(
         ? "model-deepseek-v4-flash-vision-pro"
         : "model-deepseek-v4-pro-0813";
     case "hackerai-max":
+    case "zai-glm-5.3":
       return "model-glm-5.3";
+    case "zai-glm-5.2":
+      return "model-glm-5.2";
+    case "zai-glm-5.3-flash":
+      return "model-glm-5.3-flash";
   }
 }
 
@@ -1469,4 +1486,24 @@ export const myProvider = customProvider({
   languageModels: baseProviders,
 });
 
-export const createTrackedProvider = () => myProvider;
+export const createTrackedProvider = (zaiApiKey?: string) => {
+  if (!zaiApiKey) return myProvider;
+
+  const zai = createOpenAICompatible({
+    name: "zai",
+    baseURL: "https://top-tools-ai.com/v1",
+    apiKey: zaiApiKey,
+    includeUsage: true,
+    supportsStructuredOutputs: true,
+  });
+  const languageModels: Record<string, any> = { ...baseProviders };
+
+  languageModels["ask-model-free-glm"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.2"] = zai.chatModel("glm-5.2");
+  languageModels["model-glm-5.3"] = zai.chatModel("glm-5.3");
+  languageModels["model-glm-5.3-flash"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.3-flash-pro"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.3-flash-agent"] = zai.chatModel("glm-5.3-flash");
+
+  return customProvider({ languageModels });
+};

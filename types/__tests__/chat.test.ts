@@ -97,9 +97,15 @@ describe("Max model entitlement helpers", () => {
     ).toBe("hackerai-max");
   });
 
-  it("downgrades Max for paid users without usable extra usage", () => {
+  it("downgrades Max-tier GLM models for users without usable extra usage", () => {
     expect(canUseMaxModel("pro")).toBe(false);
     expect(normalizeMaxModelForSubscription("hackerai-max", "pro")).toBe(
+      "hackerai-pro",
+    );
+    expect(normalizeMaxModelForSubscription("zai-glm-5.2", "pro")).toBe(
+      "hackerai-pro",
+    );
+    expect(normalizeMaxModelForSubscription("zai-glm-5.3", "pro")).toBe(
       "hackerai-pro",
     );
     expect(
@@ -113,6 +119,27 @@ describe("Max model entitlement helpers", () => {
         },
       }),
     ).toBe("hackerai-pro");
+  });
+
+  it("applies Max-tier billing rules to GLM 5.2 and 5.3 selections", () => {
+    const extraUsageConfig = {
+      enabled: true,
+      hasBalance: true,
+      autoReloadEnabled: false,
+    };
+    expect(
+      withExtraUsageBillingForModel(extraUsageConfig, "zai-glm-5.2", "pro"),
+    ).toEqual({ ...extraUsageConfig, chargeAllUsage: true });
+    expect(
+      withExtraUsageBillingForModel(extraUsageConfig, "zai-glm-5.3", "pro"),
+    ).toEqual({ ...extraUsageConfig, chargeAllUsage: true });
+    expect(
+      withExtraUsageBillingForModel(
+        extraUsageConfig,
+        "zai-glm-5.3-flash",
+        "pro",
+      ),
+    ).toBe(extraUsageConfig);
   });
 
   it("bills Max entirely through Extra Usage outside Ultra", () => {

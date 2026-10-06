@@ -13,6 +13,7 @@ import {
   Server,
   ChartNoAxesCombined,
   Gauge,
+  KeyRound,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ManageNotesDialog } from "@/app/components/ManageNotesDialog";
@@ -26,6 +27,7 @@ import { RemoteControlTab } from "@/app/components/RemoteControlTab";
 import { UsageTab } from "@/app/components/UsageTab";
 import { ExtraUsageSection } from "@/app/components/ExtraUsageSection";
 import { TeamExtraUsageSection } from "@/app/components/TeamExtraUsageSection";
+import { ProviderKeysTab } from "@/app/components/ProviderKeysTab";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGlobalState } from "@/app/contexts/GlobalState";
 
@@ -85,6 +87,7 @@ const SettingsDialog = ({
   // Base tabs visible to all users
   const baseTabs = [
     { id: "Personalization", label: "Personalization", icon: Settings },
+    { id: "API keys", label: "API keys", icon: KeyRound },
     { id: "Security", label: "Security", icon: Shield },
     { id: "Data controls", label: "Data controls", icon: Database },
   ];
@@ -256,6 +259,8 @@ const SettingsDialog = ({
                     subscription={subscription}
                   />
                 )}
+
+                {activeTab === "API keys" && <ProviderKeysTab />}
 
                 {activeTab === "Security" && <SecurityTab />}
 

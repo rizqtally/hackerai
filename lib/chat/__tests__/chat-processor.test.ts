@@ -400,6 +400,27 @@ describe("selectModel", () => {
     },
   );
 
+  it.each([
+    ["zai-glm-5.2", "model-glm-5.2"],
+    ["zai-glm-5.3", "model-glm-5.3"],
+    ["zai-glm-5.3-flash", "model-glm-5.3-flash"],
+  ] as const)(
+    "routes explicit %s selection to its GLM model",
+    (selection, expected) => {
+      expect(selectModel("ask", "ultra", selection)).toBe(expected);
+      expect(selectModel("agent", "ultra", selection)).toBe(expected);
+    },
+  );
+
+  it("uses the vision-capable GLM Flash model for images from text-only GLM picks", () => {
+    expect(selectModel("ask", "ultra", "zai-glm-5.2", true)).toBe(
+      "model-glm-5.3-flash",
+    );
+    expect(selectModel("agent", "ultra", "zai-glm-5.3", true)).toBe(
+      "model-glm-5.3-flash-agent",
+    );
+  });
+
   it.each(["pro", "pro-plus", "ultra", "team"] as const)(
     "routes paid %s explicit Standard text to the mode-specific Flash model",
     (subscription) => {

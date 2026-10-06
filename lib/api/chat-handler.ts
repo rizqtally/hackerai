@@ -154,7 +154,11 @@ import {
   BACKGROUND_WORK_DRAIN_TIMEOUT_MS,
   drainBackgroundWork,
 } from "@/lib/chat/background-work-drain";
-import { createTrackedProvider } from "@/lib/ai/providers";
+import {
+  createTrackedProvider,
+  isZaiProviderModelKey,
+} from "@/lib/ai/providers";
+import { getZaiApiKeyForUser } from "@/lib/ai/zai-credentials";
 import {
   getSandboxUploadFailureMetadata,
   getSandboxUploadUserMessage,
@@ -478,6 +482,7 @@ export const createChatHandler = () => {
         { regenerate },
       );
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
+      const userZaiApiKey = await getZaiApiKeyForUser(userId);
       selectedModelOverride =
         normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
           extraUsageAvailable,
@@ -511,7 +516,7 @@ export const createChatHandler = () => {
       });
       const freeLimits = regionalFreeLimits;
       const freeMonthlyBudgetSnapshot =
-        subscription === "free"
+        subscription === "free" && !userZaiApiKey
           ? await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits)
           : null;
 
@@ -693,6 +698,7 @@ export const createChatHandler = () => {
             organizationId,
             freeQuotaSubject,
             freeLimits,
+            Boolean(userZaiApiKey && isZaiProviderModelKey(selectedModel)),
           ));
       } catch (error) {
         if (!(error instanceof ChatSDKError)) {
@@ -1102,7 +1108,7 @@ export const createChatHandler = () => {
                 )
               : Promise.resolve(undefined);
 
-            const trackedProvider = createTrackedProvider();
+            const trackedProvider = createTrackedProvider(userZaiApiKey);
 
             let currentSystemPrompt = await systemPrompt(
               userId,
@@ -1654,6 +1660,7 @@ export const createChatHandler = () => {
                 recordFlashRoutingExposure(configuredModel);
               },
               trackedProvider,
+              zaiApiKeyConfigured: Boolean(userZaiApiKey),
               currentSystemPrompt,
               tools,
               mode,

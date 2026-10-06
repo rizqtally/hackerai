@@ -488,6 +488,34 @@ describe("token-bucket async functions", () => {
       }
     });
 
+    it("does not deduct application model points for customer-key requests", async () => {
+      const { checkTokenBucketLimit } = getIsolatedModule();
+      mockLimitFn.mockResolvedValue({
+        success: true,
+        remaining: 250000,
+        reset: Date.now() + 3600000,
+        limit: 250000,
+      });
+
+      const result = await checkTokenBucketLimit(
+        "user-123",
+        "pro",
+        100_000,
+        undefined,
+        "model-glm-5.3",
+        undefined,
+        false,
+      );
+
+      expect(result.pointsDeducted).toBe(0);
+      expect(result.extraUsagePointsDeducted ?? 0).toBe(0);
+      expect(mockDeductFromBalance).not.toHaveBeenCalled();
+      expect(mockLimitFn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ rate: 0 }),
+      );
+    });
+
     it("uses extra usage when the exhausted allowance peek is unsuccessful", async () => {
       const { checkTokenBucketLimit } = getIsolatedModule();
 

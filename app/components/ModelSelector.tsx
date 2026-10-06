@@ -69,7 +69,15 @@ interface ModelSelectorProps {
 const AUTO_MODEL_DESCRIPTION =
   "Balanced quality and speed, recommended for most tasks";
 
-const isMaxModel = (model: SelectedModel): boolean => model === "hackerai-max";
+const isMaxModel = (model: SelectedModel): boolean =>
+  model === "hackerai-max" ||
+  model === "zai-glm-5.2" ||
+  model === "zai-glm-5.3";
+
+const isZaiModel = (model: SelectedModel): boolean =>
+  model === "zai-glm-5.2" ||
+  model === "zai-glm-5.3" ||
+  model === "zai-glm-5.3-flash";
 
 const canUnlockMaxWithExtraUsage = (accessTier: SubscriptionTier): boolean =>
   accessTier !== "free" && accessTier !== "ultra";
@@ -446,10 +454,14 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
 
   const isFreeUser = accessTier === "free";
   const isFreeSubscription = subscription === "free";
+  const zaiApiKeyStatus = useQuery(
+    api.userCustomization.getZaiApiKeyStatus,
+    open || isZaiModel(value) ? {} : "skip",
+  );
   const shouldCheckPersonalMaxExtraUsage =
     !isFreeSubscription &&
     (accessTier === "pro" || accessTier === "pro-plus") &&
-    (open || value === "hackerai-max");
+    (open || isMaxModel(value));
   const maxModelEntitlement = useQuery(
     api.extraUsage.getMaxModelExtraUsageEntitlement,
     shouldCheckPersonalMaxExtraUsage ? {} : "skip",
@@ -463,16 +475,16 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
     accessTier,
   );
   const displayValue =
-    value === "hackerai-max" && maxModelEntitlementLoading
+    isMaxModel(value) && maxModelEntitlementLoading
       ? accessTierValue
       : (normalizeMaxModelForSubscription(accessTierValue, accessTier, {
           extraUsageAvailable: maxModelExtraUsageAvailable,
         }) ?? "auto");
   const isAuto = displayValue === "auto";
 
-  const options = (
-    isAgentMode(mode) ? AGENT_MODEL_OPTIONS : ASK_MODEL_OPTIONS
-  ).filter((option) => !isFreeSubscription || !isMaxModel(option.id));
+  const options = (isAgentMode(mode) ? AGENT_MODEL_OPTIONS : ASK_MODEL_OPTIONS)
+    .filter((option) => !isZaiModel(option.id) || zaiApiKeyStatus?.configured)
+    .filter((option) => !isFreeSubscription || !isMaxModel(option.id));
 
   const effectiveValue = isAuto ? getDefaultModelForMode(mode) : displayValue;
   const selected =

@@ -296,6 +296,18 @@ describe("provider registry", () => {
     expect(isDeepSeekModel("model-deepseek-v4-pro-0813")).toBe(true);
   });
 
+  it("routes saved personal keys to Top Tools GLM model IDs", () => {
+    const provider = createTrackedProvider("account-specific-key");
+    expect(provider.languageModel("model-glm-5.2").modelId).toBe("glm-5.2");
+    expect(provider.languageModel("model-glm-5.3").modelId).toBe("glm-5.3");
+    expect(provider.languageModel("model-glm-5.3-flash").modelId).toBe(
+      "glm-5.3-flash",
+    );
+    expect(provider.languageModel("model-deepseek-v4-pro-0813").modelId).toBe(
+      "deepseek/deepseek-v4-pro-0813",
+    );
+  });
+
   it("keeps tracked free Ask on GLM, rescue on 0731, and Agent on V4.1", () => {
     const provider = createTrackedProvider();
     expect(

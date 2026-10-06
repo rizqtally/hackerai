@@ -30,6 +30,26 @@ export const ASK_MODEL_OPTIONS: ModelOption[] = [
     description: "Maximum intelligence for complex work",
     poweredBy: "Z.ai GLM 5.3",
   },
+  {
+    id: "zai-glm-5.2",
+    label: "GLM 5.2",
+    description: "Direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
+  },
+  {
+    id: "zai-glm-5.3",
+    label: "GLM 5.3",
+    description: "Direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
+    thinking: true,
+  },
+  {
+    id: "zai-glm-5.3-flash",
+    label: "GLM 5.3 Flash",
+    description: "Fast direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
+    thinking: true,
+  },
 ];
 
 export const AGENT_MODEL_OPTIONS: ModelOption[] = [
@@ -52,6 +72,27 @@ export const AGENT_MODEL_OPTIONS: ModelOption[] = [
     label: "HackerAI Max",
     description: "Maximum intelligence for complex work",
     poweredBy: "Z.ai GLM 5.3",
+    thinking: true,
+  },
+  {
+    id: "zai-glm-5.2",
+    label: "GLM 5.2",
+    description: "Direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
+    thinking: true,
+  },
+  {
+    id: "zai-glm-5.3",
+    label: "GLM 5.3",
+    description: "Direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
+    thinking: true,
+  },
+  {
+    id: "zai-glm-5.3-flash",
+    label: "GLM 5.3 Flash",
+    description: "Fast direct model access using your own API key",
+    poweredBy: "Z.AI via Top Tools AI",
     thinking: true,
   },
 ];

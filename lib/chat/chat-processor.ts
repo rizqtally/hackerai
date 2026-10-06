@@ -67,7 +67,18 @@ export function selectModel(
   );
   // Paid Standard uses native GLM vision as well as text/PDF parsing. Resolve
   // it before the legacy media promotions so every paid plan keeps this route.
-  if (subscription !== "free" && allowedSelectedModel === "hackerai-standard") {
+  if (
+    subscription !== "free" &&
+    (allowedSelectedModel === "hackerai-standard" ||
+      allowedSelectedModel === "zai-glm-5.2" ||
+      allowedSelectedModel === "zai-glm-5.3" ||
+      allowedSelectedModel === "zai-glm-5.3-flash")
+  ) {
+    if (hasImageAttachment && allowedSelectedModel !== "zai-glm-5.3-flash") {
+      return mode === "agent"
+        ? "model-glm-5.3-flash-agent"
+        : "model-glm-5.3-flash";
+    }
     return resolveTierToProviderKey(allowedSelectedModel, mode);
   }
   // Pro/Pro+ Auto uses GLM Flash for lower-cost direct vision.

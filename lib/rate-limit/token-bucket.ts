@@ -905,6 +905,7 @@ export const checkTokenBucketLimit = async (
   extraUsageConfig?: ExtraUsageConfig,
   modelName?: string,
   organizationId?: string,
+  billableModelUsage = true,
 ): Promise<RateLimitInfo> => {
   const redis = createRedisClient();
 
@@ -948,11 +949,9 @@ export const checkTokenBucketLimit = async (
       );
     }
 
-    const estimatedCost = calculateTokenCost(
-      estimatedInputTokens,
-      "input",
-      modelName,
-    );
+    const estimatedCost = billableModelUsage
+      ? calculateTokenCost(estimatedInputTokens, "input", modelName)
+      : 0;
 
     const upgradeHint =
       subscription === "pro"

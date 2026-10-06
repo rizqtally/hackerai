@@ -35,13 +35,22 @@ export function coerceAgentPermissionMode(value: unknown): AgentPermissionMode {
 }
 
 export type SelectedModel =
-  "auto" | "hackerai-standard" | "hackerai-pro" | "hackerai-max";
+  | "auto"
+  | "hackerai-standard"
+  | "hackerai-pro"
+  | "hackerai-max"
+  | "zai-glm-5.2"
+  | "zai-glm-5.3"
+  | "zai-glm-5.3-flash";
 
 export const SELECTABLE_MODELS: readonly SelectedModel[] = [
   "auto",
   "hackerai-standard",
   "hackerai-pro",
   "hackerai-max",
+  "zai-glm-5.2",
+  "zai-glm-5.3",
+  "zai-glm-5.3-flash",
 ];
 
 /**
@@ -183,16 +192,17 @@ export function canUseMaxModel(
   );
 }
 
+const isMaxTierModel = (model: SelectedModel | null | undefined): boolean =>
+  model === "hackerai-max" ||
+  model === "zai-glm-5.2" ||
+  model === "zai-glm-5.3";
+
 export function withExtraUsageBillingForModel(
   extraUsageConfig: ExtraUsageConfig | undefined,
   model: SelectedModel | null | undefined,
   subscription: SubscriptionTier,
 ): ExtraUsageConfig | undefined {
-  if (
-    !extraUsageConfig ||
-    model !== "hackerai-max" ||
-    subscription === "ultra"
-  ) {
+  if (!extraUsageConfig || !isMaxTierModel(model) || subscription === "ultra") {
     return extraUsageConfig;
   }
 
@@ -207,7 +217,7 @@ export const normalizeMaxModelForSubscription = (
   subscription: SubscriptionTier,
   options: MaxModelEntitlementOptions = {},
 ): SelectedModel | null | undefined => {
-  if (model === "hackerai-max" && !canUseMaxModel(subscription, options)) {
+  if (isMaxTierModel(model) && !canUseMaxModel(subscription, options)) {
     return "hackerai-pro";
   }
   return model;

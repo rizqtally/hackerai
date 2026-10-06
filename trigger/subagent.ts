@@ -29,7 +29,11 @@ import {
 
 import { agentUiStream } from "./streams";
 import { createTools } from "@/lib/ai/tools";
-import { createTrackedProvider } from "@/lib/ai/providers";
+import {
+  createTrackedProvider,
+  isZaiProviderModelKey,
+} from "@/lib/ai/providers";
+import { getZaiApiKeyForUser } from "@/lib/ai/zai-credentials";
 import {
   createLoadSkillTool,
   createSearchSkillsTool,
@@ -1077,7 +1081,8 @@ export const subagentTask = task({
             assertSubagentSandboxIdentity(sandbox, row.sandbox_identity);
             const tools = authorizedTools;
 
-            const provider = createTrackedProvider();
+            const userZaiApiKey = await getZaiApiKeyForUser(row.user_id);
+            const provider = createTrackedProvider(userZaiApiKey);
             const getGuardedLanguageModel = (
               modelName: string,
               generationAttempt: number,
@@ -1438,6 +1443,12 @@ export const subagentTask = task({
                     ? usageTracker.accumulateStep(
                         usage,
                         response?.modelId ?? activeModelName,
+                        {
+                          billable: !(
+                            userZaiApiKey &&
+                            isZaiProviderModelKey(activeModelName)
+                          ),
+                        },
                       )
                     : undefined;
                   const openRouter = extractOpenRouterMetadata({

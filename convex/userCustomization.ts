@@ -207,3 +207,103 @@ export const getUserCustomizationForBackend = query({
     }
   },
 });
+
+export const getZaiApiKeyStatus = query({
+  args: {},
+  returns: v.union(
+    v.null(),
+    v.object({
+      configured: v.boolean(),
+      keyLastFour: v.union(v.string(), v.null()),
+      updatedAt: v.union(v.number(), v.null()),
+    }),
+  ),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const credential = await ctx.db
+      .query("zai_api_credentials")
+      .withIndex("by_user_id", (q) => q.eq("user_id", identity.subject))
+      .first();
+
+    return {
+      configured: Boolean(credential),
+      keyLastFour: credential?.key_last_four ?? null,
+      updatedAt: credential?.updated_at ?? null,
+    };
+  },
+});
+
+export const getZaiApiKeyForBackend = query({
+  args: {
+    serviceKey: v.string(),
+    userId: v.string(),
+  },
+  returns: v.union(v.null(), v.object({ encrypted_api_key: v.string() })),
+  handler: async (ctx, args) => {
+    validateServiceKey(args.serviceKey);
+    const credential = await ctx.db
+      .query("zai_api_credentials")
+      .withIndex("by_user_id", (q) => q.eq("user_id", args.userId))
+      .first();
+
+    return credential
+      ? { encrypted_api_key: credential.encrypted_api_key }
+      : null;
+  },
+});
+
+export const saveZaiApiKeyForBackend = mutation({
+  args: {
+    serviceKey: v.string(),
+    userId: v.string(),
+    encryptedApiKey: v.string(),
+    keyLastFour: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    validateServiceKey(args.serviceKey);
+    if (
+      args.encryptedApiKey.length > 2048 ||
+      !/^.{4}$/.test(args.keyLastFour)
+    ) {
+      throw new ConvexError({
+        code: "VALIDATION_ERROR",
+        message: "Invalid Z.AI credential data",
+      });
+    }
+
+    const existing = await ctx.db
+      .query("zai_api_credentials")
+      .withIndex("by_user_id", (q) => q.eq("user_id", args.userId))
+      .first();
+    const credential = {
+      user_id: args.userId,
+      encrypted_api_key: args.encryptedApiKey,
+      key_last_four: args.keyLastFour,
+      updated_at: Date.now(),
+    };
+
+    if (existing) await ctx.db.patch(existing._id, credential);
+    else await ctx.db.insert("zai_api_credentials", credential);
+    return null;
+  },
+});
+
+export const removeZaiApiKeyForBackend = mutation({
+  args: {
+    serviceKey: v.string(),
+    userId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    validateServiceKey(args.serviceKey);
+    const existing = await ctx.db
+      .query("zai_api_credentials")
+      .withIndex("by_user_id", (q) => q.eq("user_id", args.userId))
+      .first();
+    if (existing) await ctx.db.delete(existing._id);
+    return null;
+  },
+});

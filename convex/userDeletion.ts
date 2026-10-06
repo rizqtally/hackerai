@@ -21,6 +21,7 @@ export const USER_DELETION_TABLE_POLICY = {
     "task_outcome_surveys",
     "notes",
     "user_customization",
+    "zai_api_credentials",
     "extra_usage",
     "team_member_usage",
     // Shared-organization rows are anonymized in place so the organization's
@@ -449,6 +450,11 @@ async function cleanupUserDataForUser(
   >(ctx, budget, "user_customization", "by_user_id", (q) =>
     q.eq("user_id", userId),
   );
+  const zaiApiCredentialsBatch = await collectByIndexBatch<
+    Doc<"zai_api_credentials">
+  >(ctx, budget, "zai_api_credentials", "by_user_id", (q) =>
+    q.eq("user_id", userId),
+  );
   const localSandboxTokensBatch = await collectByIndexBatch<
     Doc<"local_sandbox_tokens">
   >(ctx, budget, "local_sandbox_tokens", "by_user_id", (q) =>
@@ -526,6 +532,7 @@ async function cleanupUserDataForUser(
     notesBatch,
     taskOutcomeSurveysBatch,
     customizationBatch,
+    zaiApiCredentialsBatch,
     messagesBatch,
     localSandboxTokensBatch,
     localSandboxConnectionsBatch,
@@ -546,6 +553,7 @@ async function cleanupUserDataForUser(
   const files = filesBatch.docs;
   const notes = notesBatch.docs;
   const customization = customizationBatch.docs;
+  const zaiApiCredentials = zaiApiCredentialsBatch.docs;
   const localSandboxTokens = localSandboxTokensBatch.docs;
   const localSandboxConnections = localSandboxConnectionsBatch.docs;
   const extraUsage = extraUsageBatch.docs;
@@ -614,6 +622,7 @@ async function cleanupUserDataForUser(
   await deleteFiles(ctx, stats, files, mode);
   await deleteDocs(ctx, stats, "notes", notes, mode);
   await deleteDocs(ctx, stats, "user_customization", customization, mode);
+  await deleteDocs(ctx, stats, "zai_api_credentials", zaiApiCredentials, mode);
   await deleteDocs(
     ctx,
     stats,
