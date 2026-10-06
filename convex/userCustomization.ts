@@ -235,22 +235,6 @@ export const getZaiApiKeyStatus = query({
   },
 });
 
-export const hasZaiApiKeyForBackend = query({
-  args: {
-    serviceKey: v.string(),
-    userId: v.string(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    validateServiceKey(args.serviceKey);
-    const credential = await ctx.db
-      .query("zai_api_credentials")
-      .withIndex("by_user_id", (q) => q.eq("user_id", args.userId))
-      .first();
-    return Boolean(credential);
-  },
-});
-
 export const getZaiApiKeyForBackend = query({
   args: {
     serviceKey: v.string(),

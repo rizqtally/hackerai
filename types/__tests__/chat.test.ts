@@ -15,18 +15,6 @@ describe("normalizeSelectedModelForSubscription", () => {
     expect(normalizeSelectedModelForSubscription("hackerai-max", "free")).toBe(
       "auto",
     );
-    expect(
-      normalizeSelectedModelForSubscription("zai-glm-5.2", "free", true),
-    ).toBe("zai-glm-5.2");
-    expect(
-      normalizeSelectedModelForSubscription("zai-glm-5.2", "free", false),
-    ).toBe("auto");
-    expect(
-      normalizeSelectedModelForSubscription("zai-glm-5.2", "free", true),
-    ).toBe("zai-glm-5.2");
-    expect(
-      normalizeSelectedModelForSubscription("zai-glm-5.2", "free", false),
-    ).toBe("auto");
   });
 
   it("preserves paid users' selected model and defaults missing values to auto", () => {
@@ -63,20 +51,6 @@ describe("normalizeSelectedModelOverrideForSubscription", () => {
     expect(
       normalizeSelectedModelOverrideForSubscription(undefined, "free"),
     ).toBe("auto");
-    expect(
-      normalizeSelectedModelOverrideForSubscription(
-        "zai-glm-5.3",
-        "free",
-        true,
-      ),
-    ).toBe("zai-glm-5.3");
-    expect(
-      normalizeSelectedModelOverrideForSubscription(
-        "zai-glm-5.3",
-        "free",
-        true,
-      ),
-    ).toBe("zai-glm-5.3");
   });
 
   it("preserves missing paid overrides as undefined", () => {
@@ -135,12 +109,6 @@ describe("Max model entitlement helpers", () => {
       "hackerai-pro",
     );
     expect(
-      normalizeMaxModelForSubscription("zai-glm-5.3", "free", {}, true),
-    ).toBe("zai-glm-5.3");
-    expect(
-      normalizeMaxModelForSubscription("zai-glm-5.3", "free", {}, true),
-    ).toBe("zai-glm-5.3");
-    expect(
       normalizeMaxModelForSubscription("hackerai-max", "pro-plus", {
         extraUsageConfig: {
           enabled: true,
@@ -165,22 +133,6 @@ describe("Max model entitlement helpers", () => {
     expect(
       withExtraUsageBillingForModel(extraUsageConfig, "zai-glm-5.3", "pro"),
     ).toEqual({ ...extraUsageConfig, chargeAllUsage: true });
-    expect(
-      withExtraUsageBillingForModel(
-        extraUsageConfig,
-        "zai-glm-5.3",
-        "pro",
-        true,
-      ),
-    ).toBe(extraUsageConfig);
-    expect(
-      withExtraUsageBillingForModel(
-        extraUsageConfig,
-        "zai-glm-5.3",
-        "pro",
-        true,
-      ),
-    ).toBe(extraUsageConfig);
     expect(
       withExtraUsageBillingForModel(
         extraUsageConfig,

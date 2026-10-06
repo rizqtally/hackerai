@@ -1267,9 +1267,6 @@ const buildProviderMap = (
     "model-glm-5.2": or(GLM_5_2_SLUG),
     "model-glm-5.3": or(GLM_5_3_SLUG),
     "model-glm-5.3-flash": or(GLM_5_3_FLASH_SLUG),
-    "zai-direct-glm-5.2": or(GLM_5_2_SLUG),
-    "zai-direct-glm-5.3": or(GLM_5_3_SLUG),
-    "zai-direct-glm-5.3-flash": or(GLM_5_3_FLASH_SLUG),
     "model-glm-5.3-flash-pro": or(GLM_5_3_FLASH_SLUG),
     "model-glm-5.3-flash-agent": or(GLM_5_3_FLASH_SLUG),
     "model-deepseek-v4-flash-vision": or(DEEPSEEK_V4_FLASH_VISION_SLUG),
@@ -1295,9 +1292,12 @@ const baseProviders: ReturnType<typeof buildProviderMap> = {
 export type ModelName = keyof typeof baseProviders;
 
 const ZAI_PROVIDER_MODEL_KEYS = new Set([
-  "zai-direct-glm-5.2",
-  "zai-direct-glm-5.3",
-  "zai-direct-glm-5.3-flash",
+  "ask-model-free-glm",
+  "model-glm-5.2",
+  "model-glm-5.3",
+  "model-glm-5.3-flash",
+  "model-glm-5.3-flash-pro",
+  "model-glm-5.3-flash-agent",
 ]);
 
 export const isZaiProviderModelKey = (modelName: string): boolean =>
@@ -1314,9 +1314,6 @@ export const modelCutoffDates: Partial<Record<ModelName, string>> &
   "model-deepseek-v4-pro-0813": "August 2026",
   "model-opus-4.6": "July 2026",
   "model-glm-5.2": "June 2026",
-  "zai-direct-glm-5.2": "June 2026",
-  "zai-direct-glm-5.3": "August 2026",
-  "zai-direct-glm-5.3-flash": "August 2026",
   "model-glm-5.3-flash": "August 2026",
   "model-glm-5.3-flash-pro": "August 2026",
   "model-glm-5.3-flash-agent": "August 2026",
@@ -1349,9 +1346,6 @@ export const modelDisplayNames: Record<ModelName, string> &
   "model-opus-4.6": "Moonshot Kimi K3",
   "model-glm-5.2": "Z.ai GLM 5.2",
   "model-glm-5.3": "Z.ai GLM 5.3",
-  "zai-direct-glm-5.2": "Z.AI GLM 5.2 via personal key",
-  "zai-direct-glm-5.3": "Z.AI GLM 5.3 via personal key",
-  "zai-direct-glm-5.3-flash": "Z.AI GLM 5.3 Flash via personal key",
   "model-glm-5.3-flash": "Z.ai GLM 5.3 Flash",
   "model-glm-5.3-flash-pro": "Z.ai GLM 5.3 Flash",
   "model-glm-5.3-flash-agent": "Z.ai GLM 5.3 Flash",
@@ -1430,7 +1424,6 @@ export function supportsMultimodalToolResults(modelName?: string): boolean {
     normalized === "ask-model-free-deepseek-v41" ||
     normalized === "model-glm-5.3-flash-pro" ||
     normalized === "model-glm-5.3-flash-agent" ||
-    normalized === "zai-direct-glm-5.3-flash" ||
     normalized === "model-deepseek-v4-flash-vision" ||
     normalized === "model-deepseek-v4-flash-vision-pro" ||
     normalized.includes("z-ai/glm-5.3-flash") ||
@@ -1480,13 +1473,12 @@ export function resolveTierToProviderKey(
         ? "model-deepseek-v4-flash-vision-pro"
         : "model-deepseek-v4-pro-0813";
     case "hackerai-max":
+    case "zai-glm-5.3":
       return "model-glm-5.3";
     case "zai-glm-5.2":
-      return "zai-direct-glm-5.2";
-    case "zai-glm-5.3":
-      return "zai-direct-glm-5.3";
+      return "model-glm-5.2";
     case "zai-glm-5.3-flash":
-      return "zai-direct-glm-5.3-flash";
+      return "model-glm-5.3-flash";
   }
 }
 
@@ -1506,9 +1498,12 @@ export const createTrackedProvider = (zaiApiKey?: string) => {
   });
   const languageModels: Record<string, any> = { ...baseProviders };
 
-  languageModels["zai-direct-glm-5.2"] = zai.chatModel("glm-5.2");
-  languageModels["zai-direct-glm-5.3"] = zai.chatModel("glm-5.3");
-  languageModels["zai-direct-glm-5.3-flash"] = zai.chatModel("glm-5.3-flash");
+  languageModels["ask-model-free-glm"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.2"] = zai.chatModel("glm-5.2");
+  languageModels["model-glm-5.3"] = zai.chatModel("glm-5.3");
+  languageModels["model-glm-5.3-flash"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.3-flash-pro"] = zai.chatModel("glm-5.3-flash");
+  languageModels["model-glm-5.3-flash-agent"] = zai.chatModel("glm-5.3-flash");
 
   return customProvider({ languageModels });
 };

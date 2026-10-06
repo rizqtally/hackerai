@@ -99,21 +99,6 @@ describe("ModelSelector", () => {
     unmount();
   });
 
-  it("lets free users select a connected GLM billed by their provider", async () => {
-    mockSubscription = "free";
-    mockMaxEntitlement = { configured: true, extraUsageAvailable: false };
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    render(<ModelSelector value="auto" onChange={onChange} mode="ask" />);
-
-    await user.click(screen.getByRole("button", { name: /^Auto$/i }));
-    await user.click(screen.getByRole("button", { name: /GLM 5\.2/ }));
-
-    expect(onChange).toHaveBeenCalledWith("zai-glm-5.2");
-    expect(mockRedirectToPricing).not.toHaveBeenCalled();
-    expect(mockOpenSettingsDialog).not.toHaveBeenCalled();
-  });
-
   it("shows model choices immediately while Auto is selected", () => {
     render(<ModelSelector value="auto" onChange={jest.fn()} mode="ask" />);
 

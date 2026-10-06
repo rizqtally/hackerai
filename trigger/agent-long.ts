@@ -221,7 +221,6 @@ import type {
 import {
   AGENT_TOOL_APPROVAL_PROTOCOL_VERSION,
   canUseExtraUsage,
-  isPersonalZaiModelSelection,
   normalizeMaxModelForSubscription,
   serializeSandboxScopedAgentApprovalTargetPrefix,
   withExtraUsageBillingForModel,
@@ -1923,24 +1922,20 @@ export const agentLongTask = task({
         baseExtraUsageConfigPromise,
       ]);
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
-      const userZaiApiKey = await getZaiApiKeyForUser(userId);
       selectedModelOverride =
-        normalizeMaxModelForSubscription(
-          selectedModelOverride,
-          accessTier,
-          { extraUsageAvailable },
-          Boolean(userZaiApiKey),
-        ) ?? undefined;
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
+          extraUsageAvailable,
+        }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
         baseExtraUsageConfig,
         selectedModelOverride,
         subscription,
-        Boolean(userZaiApiKey),
       );
       const directGlmVisionEnabled = isEligibleForDirectGlmVision({
         subscription: accessTier,
         selectedModelOverride,
       });
+      const userZaiApiKey = await getZaiApiKeyForUser(userId);
       const posthog = PostHogClient();
       const cloudSandboxSelection =
         !sandboxPreference || sandboxPreference === "e2b"
@@ -1976,10 +1971,7 @@ export const agentLongTask = task({
           freeQuotaSubject,
           freeLimits,
         );
-        if (
-          !userZaiApiKey ||
-          !isPersonalZaiModelSelection(selectedModelOverride)
-        ) {
+        if (!userZaiApiKey) {
           await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
         }
       }
@@ -2009,10 +2001,9 @@ export const agentLongTask = task({
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
+        allowLocalDesktopFiles: isDesktopPreference(sandboxPreference ?? "e2b"),
         directGlmVisionEnabled,
-        personalZaiApiKeyConfigured: Boolean(userZaiApiKey),
         chatId,
-
         triggerRunId: ctx.run.id,
         requestId: ctx.run.id,
       });
@@ -2273,11 +2264,7 @@ export const agentLongTask = task({
             }
 
             const freeMonthlyBudgetSnapshot =
-              subscription === "free" &&
-              !(
-                userZaiApiKey &&
-                isPersonalZaiModelSelection(selectedModelOverride)
-              )
+              subscription === "free" && !userZaiApiKey
                 ? await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits)
                 : null;
 
@@ -2529,9 +2516,7 @@ export const agentLongTask = task({
                 selectedModelOverride,
                 resolveProductAccessTier(authorization.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
-                Boolean(userZaiApiKey),
               );
-
               if (currentlyAllowedModel !== selectedModelOverride) {
                 throw new AgentApprovalAuthorizationError(
                   "authorization_mismatch",
@@ -2543,7 +2528,6 @@ export const agentLongTask = task({
                   currentExtraUsageConfig,
                   currentlyAllowedModel,
                   authorization.subscription,
-                  Boolean(userZaiApiKey),
                 );
 
               await checkRateLimitCapacity(
@@ -2557,12 +2541,7 @@ export const agentLongTask = task({
                 freeLimits,
               );
               if (authorization.subscription === "free") {
-                if (
-                  !userZaiApiKey ||
-                  !isPersonalZaiModelSelection(selectedModelOverride)
-                ) {
-                  await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
-                }
+                await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
                 const lock = await acquireFreeRunConcurrencyLock(
                   freeUsageSubject,
                   FREE_AGENT_LONG_RUN_LOCK_TTL_SECONDS,
@@ -2626,9 +2605,7 @@ export const agentLongTask = task({
                 selectedModelOverride,
                 resolveProductAccessTier(currentEntitlement.subscription),
                 { extraUsageConfig: currentExtraUsageConfig },
-                Boolean(userZaiApiKey),
               );
-
               if (currentlyAllowedModel !== selectedModelOverride) {
                 throw new AgentApprovalAuthorizationError(
                   "authorization_mismatch",
@@ -2640,7 +2617,6 @@ export const agentLongTask = task({
                   currentExtraUsageConfig,
                   currentlyAllowedModel,
                   currentEntitlement.subscription,
-                  Boolean(userZaiApiKey),
                 );
               await checkRateLimitCapacity(
                 userId,
@@ -2653,12 +2629,7 @@ export const agentLongTask = task({
                 freeLimits,
               );
               if (currentEntitlement.subscription === "free") {
-                if (
-                  !userZaiApiKey ||
-                  !isPersonalZaiModelSelection(selectedModelOverride)
-                ) {
-                  await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
-                }
+                await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits);
               }
             };
             let approvalSandboxManager: SandboxManager | undefined;

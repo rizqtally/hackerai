@@ -43,7 +43,6 @@ import {
   canUseExtraUsage,
   coerceSelectedModel,
   isLimitRescueRequest,
-  isPersonalZaiModelSelection,
   normalizeMaxModelForSubscription,
   normalizeSelectedModelOverrideForSubscription,
   withExtraUsageBillingForModel,
@@ -382,8 +381,10 @@ export const createChatHandler = () => {
       paidDailyFreeAllowanceUserId = userId;
       const freeUsageSubject = freeQuotaSubject ?? userId;
       let selectedModelOverride: SelectedModel | undefined =
-        coerceSelectedModel(rawSelectedModel ?? null) ?? undefined;
-
+        normalizeSelectedModelOverrideForSubscription(
+          coerceSelectedModel(rawSelectedModel ?? null),
+          accessTier,
+        );
       await assertUserCanMakeCostIncurringRequest(userId);
       await enforceRegionalSubscriptionFirst({
         userId,
@@ -482,23 +483,14 @@ export const createChatHandler = () => {
       );
       const extraUsageAvailable = canUseExtraUsage(baseExtraUsageConfig);
       const userZaiApiKey = await getZaiApiKeyForUser(userId);
-      selectedModelOverride = normalizeSelectedModelOverrideForSubscription(
-        selectedModelOverride,
-        accessTier,
-        Boolean(userZaiApiKey),
-      );
       selectedModelOverride =
-        normalizeMaxModelForSubscription(
-          selectedModelOverride,
-          accessTier,
-          { extraUsageAvailable },
-          Boolean(userZaiApiKey),
-        ) ?? undefined;
+        normalizeMaxModelForSubscription(selectedModelOverride, accessTier, {
+          extraUsageAvailable,
+        }) ?? undefined;
       const extraUsageConfig = withExtraUsageBillingForModel(
         baseExtraUsageConfig,
         selectedModelOverride,
         subscription,
-        Boolean(userZaiApiKey),
       );
       const attachmentCounts = countFileAttachments(truncatedMessages);
       const directGlmVisionEnabled =
@@ -523,11 +515,8 @@ export const createChatHandler = () => {
         country: regionalFreeCountryFromRequest(req),
       });
       const freeLimits = regionalFreeLimits;
-      const usesPersonalZaiKey =
-        Boolean(userZaiApiKey) &&
-        isPersonalZaiModelSelection(selectedModelOverride);
       const freeMonthlyBudgetSnapshot =
-        subscription === "free" && !usesPersonalZaiKey
+        subscription === "free" && !userZaiApiKey
           ? await checkFreeMonthlyCostLimit(freeUsageSubject, freeLimits)
           : null;
 
@@ -569,7 +558,6 @@ export const createChatHandler = () => {
         uploadBasePath,
         modelOverride: selectedModelOverride,
         extraUsageAvailable,
-        personalZaiApiKeyConfigured: Boolean(userZaiApiKey),
         allowLocalDesktopFiles:
           isAgentMode(mode) && isDesktopPreference(sandboxPreference ?? "e2b"),
         directGlmVisionEnabled,

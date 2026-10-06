@@ -60,9 +60,9 @@ describe("ModelSelector tier ↔ provider drift", () => {
 
   it("exposes GLM 5.2, 5.3, and Flash as provider-backed choices", () => {
     for (const [selection, providerKey] of [
-      ["zai-glm-5.2", "zai-direct-glm-5.2"],
-      ["zai-glm-5.3", "zai-direct-glm-5.3"],
-      ["zai-glm-5.3-flash", "zai-direct-glm-5.3-flash"],
+      ["zai-glm-5.2", "model-glm-5.2"],
+      ["zai-glm-5.3", "model-glm-5.3"],
+      ["zai-glm-5.3-flash", "model-glm-5.3-flash"],
     ] as const) {
       expect(resolveTierToProviderKey(selection, "ask")).toBe(providerKey);
       expect(resolveTierToProviderKey(selection, "agent")).toBe(providerKey);

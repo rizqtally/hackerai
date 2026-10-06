@@ -11,7 +11,6 @@ import { geolocation } from "@vercel/functions";
 import type { UIMessage } from "ai";
 
 import { getUserIDAndPro } from "@/lib/auth/get-user-id";
-import { hasZaiApiKeyForUser } from "@/lib/ai/zai-credentials";
 import { assertUserCanMakeCostIncurringRequest } from "@/lib/suspensions";
 import {
   getChatById,
@@ -467,12 +466,10 @@ export const createAgentTriggerPost =
         organizationId,
         freeQuotaSubject,
       } = await getUserIDAndPro(req);
-      const personalZaiApiKeyConfigured = await hasZaiApiKeyForUser(userId);
       let selectedModelOverride: SelectedModel | undefined =
         normalizeSelectedModelOverrideForSubscription(
           coerceSelectedModel(rawSelectedModel ?? null),
           accessTier,
-          personalZaiApiKeyConfigured,
         );
       await assertUserCanMakeCostIncurringRequest(userId);
       const regionalSubscriptionCountry =

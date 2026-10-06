@@ -69,7 +69,10 @@ interface ModelSelectorProps {
 const AUTO_MODEL_DESCRIPTION =
   "Balanced quality and speed, recommended for most tasks";
 
-const isMaxModel = (model: SelectedModel): boolean => model === "hackerai-max";
+const isMaxModel = (model: SelectedModel): boolean =>
+  model === "hackerai-max" ||
+  model === "zai-glm-5.2" ||
+  model === "zai-glm-5.3";
 
 const isZaiModel = (model: SelectedModel): boolean =>
   model === "zai-glm-5.2" ||
@@ -87,14 +90,9 @@ const isModelLockedForSubscription = (
   accessTier: SubscriptionTier,
   model: SelectedModel,
   extraUsageAvailable = false,
-  personalZaiApiKeyConfigured = false,
-): boolean => {
-  if (personalZaiApiKeyConfigured && isZaiModel(model)) return false;
-  return (
-    accessTier === "free" ||
-    (isMaxModel(model) && !canUseMaxModel(accessTier, { extraUsageAvailable }))
-  );
-};
+): boolean =>
+  accessTier === "free" ||
+  (isMaxModel(model) && !canUseMaxModel(accessTier, { extraUsageAvailable }));
 
 const getLockedModelCta = (
   model: SelectedModel,
@@ -472,21 +470,16 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
     shouldCheckPersonalMaxExtraUsage && maxModelEntitlement === undefined;
   const maxModelExtraUsageAvailable =
     maxModelEntitlement?.extraUsageAvailable ?? false;
-  const personalZaiApiKeyConfigured = zaiApiKeyStatus?.configured === true;
   const accessTierValue = normalizeSelectedModelForSubscription(
     value,
     accessTier,
-    personalZaiApiKeyConfigured,
   );
   const displayValue =
     isMaxModel(value) && maxModelEntitlementLoading
       ? accessTierValue
-      : (normalizeMaxModelForSubscription(
-          accessTierValue,
-          accessTier,
-          { extraUsageAvailable: maxModelExtraUsageAvailable },
-          personalZaiApiKeyConfigured,
-        ) ?? "auto");
+      : (normalizeMaxModelForSubscription(accessTierValue, accessTier, {
+          extraUsageAvailable: maxModelExtraUsageAvailable,
+        }) ?? "auto");
   const isAuto = displayValue === "auto";
 
   const options = (isAgentMode(mode) ? AGENT_MODEL_OPTIONS : ASK_MODEL_OPTIONS)
@@ -497,17 +490,14 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
   const selected =
     options.find((opt) => opt.id === effectiveValue) ?? options[0];
 
-  const isPersonalZaiSelected =
-    personalZaiApiKeyConfigured && isZaiModel(value);
   const isFreeAgent = isFreeUser && isAgentMode(mode);
-  const triggerLabel =
-    isFreeAgent && !isPersonalZaiSelected
-      ? "Auto"
-      : isFreeUser && !isPersonalZaiSelected
-        ? "Model"
-        : isAuto
-          ? "Auto"
-          : selected.label;
+  const triggerLabel = isFreeAgent
+    ? "Auto"
+    : isFreeUser
+      ? "Model"
+      : isAuto
+        ? "Auto"
+        : selected.label;
 
   const handleAutoSelect = () => {
     onChange("auto");
@@ -529,7 +519,6 @@ export function ModelSelector({ value, onChange, mode }: ModelSelectorProps) {
         accessTier,
         option.id,
         maxModelExtraUsageAvailable,
-        personalZaiApiKeyConfigured,
       )
     ) {
       setOpen(false);

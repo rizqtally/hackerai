@@ -296,22 +296,12 @@ describe("provider registry", () => {
     expect(isDeepSeekModel("model-deepseek-v4-pro-0813")).toBe(true);
   });
 
-  it("routes only personal GLM aliases to Top Tools when a key is saved", () => {
+  it("routes saved personal keys to Top Tools GLM model IDs", () => {
     const provider = createTrackedProvider("account-specific-key");
-    expect(provider.languageModel("zai-direct-glm-5.2").modelId).toBe(
-      "glm-5.2",
-    );
-    expect(provider.languageModel("zai-direct-glm-5.3").modelId).toBe(
-      "glm-5.3",
-    );
-    expect(provider.languageModel("zai-direct-glm-5.3-flash").modelId).toBe(
-      "glm-5.3-flash",
-    );
-    expect(provider.languageModel("model-glm-5.3").modelId).toBe(
-      "z-ai/glm-5.3",
-    );
+    expect(provider.languageModel("model-glm-5.2").modelId).toBe("glm-5.2");
+    expect(provider.languageModel("model-glm-5.3").modelId).toBe("glm-5.3");
     expect(provider.languageModel("model-glm-5.3-flash").modelId).toBe(
-      GLM_5_3_FLASH_SLUG,
+      "glm-5.3-flash",
     );
     expect(provider.languageModel("model-deepseek-v4-pro-0813").modelId).toBe(
       "deepseek/deepseek-v4-pro-0813",

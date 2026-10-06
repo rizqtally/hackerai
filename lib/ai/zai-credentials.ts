@@ -72,13 +72,6 @@ export function decryptZaiApiKey(encryptedApiKey: string): string {
   ]).toString("utf8");
 }
 
-export async function hasZaiApiKeyForUser(userId: string): Promise<boolean> {
-  return getConvexClient().query(api.userCustomization.hasZaiApiKeyForBackend, {
-    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
-    userId,
-  });
-}
-
 export async function getZaiApiKeyForUser(
   userId: string,
 ): Promise<string | undefined> {
